@@ -7,7 +7,8 @@ services:
       MYSQL_PASSWORD: polar
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - "33060:3306"
+      # 只綁本機，避免同一網路的其他裝置連到使用預設密碼的開發資料庫
+      - "127.0.0.1:33060:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
