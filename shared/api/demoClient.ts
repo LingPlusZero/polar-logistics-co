@@ -5,6 +5,7 @@ import careerData from './demo/data/career.json'
 import departmentData from './demo/data/department.json'
 import elfData from './demo/data/elf.json'
 import { ApiError } from './errors'
+import { PASSWORD_MIN_LENGTH, isValidPassword } from './password'
 import { getStoredProfile, getToken } from './session'
 
 // Demo 模式：讀 JSON 快照，寫入只存 sessionStorage，重新整理就重置
@@ -26,17 +27,19 @@ const departmentName = (departmentId: number | null) =>
 
 const elves = elfData as ElfProfile[]
 
+const PASSWORD_KEY_PREFIX = 'demo:password:'
+
+const currentPassword = (number: string) =>
+  sessionStorage.getItem(`${PASSWORD_KEY_PREFIX}${number}`) ?? number
+
 export const demoClient: ApiClient = {
   auth: {
-    // Demo 版密碼就是自己的精靈編號，不套用正式的密碼規則（編號不到 12 字元）
+    // Demo 版預設密碼就是自己的精靈編號，不套用正式的密碼規則（編號不到 12 字元）；
+    // 改過密碼的話以新密碼為準（存 sessionStorage，與其他 Demo 資料一樣不會送出）
     async login(number, password) {
       const elf = elves.find((item) => item.number === number)
 
-      if (!elf) {
-        throw new ApiError(401, '帳號或密碼錯誤')
-      }
-
-      if (password !== elf.number) {
+      if (!elf || password !== currentPassword(elf.number)) {
         throw new ApiError(401, '帳號或密碼錯誤')
       }
 
@@ -51,6 +54,40 @@ export const demoClient: ApiClient = {
       }
 
       return profile
+    },
+    // 驗證規則與後端 ChangePasswordRequest 一致
+    async changePassword(oldPassword, newPassword, newPasswordConfirmation) {
+      const profile = getStoredProfile()
+
+      if (!getToken() || !profile) {
+        throw new ApiError(401, '尚未登入或登入已失效')
+      }
+
+      const fail = (field: string, message: string): never => {
+        throw new ApiError(422, message, { [field]: [message] })
+      }
+
+      if (oldPassword !== currentPassword(profile.number)) {
+        fail('oldPassword', '舊密碼錯誤')
+      }
+
+      if (newPassword.length < PASSWORD_MIN_LENGTH) {
+        fail('newPassword', `新密碼至少需要 ${PASSWORD_MIN_LENGTH} 個字元`)
+      }
+
+      if (!isValidPassword(newPassword)) {
+        fail('newPassword', '新密碼需包含大寫、小寫、數字與特殊符號各一個')
+      }
+
+      if (newPassword === oldPassword) {
+        fail('newPassword', '新密碼不可與舊密碼相同')
+      }
+
+      if (newPassword !== newPasswordConfirmation) {
+        fail('newPasswordConfirmation', '兩次輸入的新密碼不一致')
+      }
+
+      sessionStorage.setItem(`${PASSWORD_KEY_PREFIX}${profile.number}`, newPassword)
     },
   },
   career: {

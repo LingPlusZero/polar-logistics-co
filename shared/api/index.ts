@@ -4,7 +4,7 @@ import { httpClient } from './httpClient'
 
 export type { ApiClient } from './client'
 export { ApiError } from './errors'
-export { PASSWORD_RULES, isValidPassword } from './password'
+export { PASSWORD_MIN_LENGTH, PASSWORD_RULES, isValidPassword } from './password'
 export { clearSession, getStoredProfile, getToken, saveSession } from './session'
 export * from './types'
 

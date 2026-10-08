@@ -61,7 +61,8 @@
 - 選單與路由共用 `src/config/menu.ts`：新增頁面只需在這裡加一筆（`path`、`permission`、`component`）；未提供 `component` 的頁面先顯示 `PlaceholderView`（建置中）；群組內沒有可見項目時整組隱藏
 - 登入狀態：`src/composables/useAuth.ts`（模組層級 `ref`）；權杖與個人資料存 sessionStorage（`shared/api/session.ts`），關閉分頁即登出
 - 權限鍵由後端回傳（`permissions`），Demo 模式讀 `shared/api/demo/data/elf.json`（由 `ElfProfileResource` 匯出，ElfSeeder 或權限規則變動後需重新匯出）
-- 密碼規則在 `shared/api/password.ts`（至少 12 字元 + 大小寫數字特殊符號），給修改密碼頁使用；登入頁不顯示也不檢查規則，以後端回覆為準
+- 密碼規則在 `shared/api/password.ts`（至少 12 字元 + 大小寫數字特殊符號），與後端 `ChangePasswordRequest` 同步；登入頁不顯示也不檢查規則，以後端回覆為準，規則只用在修改密碼頁（`PasswordView.vue`，即時顯示規則達成狀況）
+- 修改密碼：成功後前端呼叫 `logout()` 並導回 `/login?notice=password-changed`（登入頁顯示「密碼已更新，請使用新密碼重新登入。」）；`ApiError.errors` 帶欄位層級的 422 訊息；Demo 模式改過的密碼存 sessionStorage（`demo:password:<編號>`），登入時以它為準，重新整理不會重置、關閉分頁才重置
 - 真實 API 帳號：E001–E022，預設密碼 `1qaz@WSX3edc`；Demo 模式（`.env.demo`、`.env.development` 設 true）密碼輸入自己的帳號（`demoClient.auth.login` 比對）。`.env.development` 目前為 `false`（接真實 API）
 - 版面：寬螢幕（≥48em）側欄固定在左側；窄螢幕改為頂列按鈕展開；固定元素以 `--banner-height` 避開 Demo 橫幅
 - 側欄選單過長時仍可捲動，但隱藏捲軸（`scrollbar-width: none`）

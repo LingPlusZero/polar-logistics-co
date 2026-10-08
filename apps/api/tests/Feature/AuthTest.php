@@ -182,4 +182,77 @@ class AuthTest extends TestCase
         $this->postJson('https://localhost/api/auth/login', ['number' => 'E001', 'password' => self::PASSWORD])
             ->assertOk();
     }
+
+    private const NEW_PASSWORD = 'N3w!Passw0rd#x';
+
+    private function changePassword(string $token, array $overrides = [])
+    {
+        return $this->withToken($token)->putJson('/api/auth/password', [
+            'oldPassword' => self::PASSWORD,
+            'newPassword' => self::NEW_PASSWORD,
+            'newPasswordConfirmation' => self::NEW_PASSWORD,
+            ...$overrides,
+        ]);
+    }
+
+    public function test_修改密碼後舊密碼失效且新密碼可登入(): void
+    {
+        $token = $this->login('E001')->json('token');
+
+        $this->changePassword($token)->assertNoContent();
+
+        // 改密碼後所有登入失效，需用新密碼重新登入
+        $this->withToken($token)->getJson('/api/auth/me')->assertUnauthorized();
+
+        $this->login('E001')->assertStatus(401);
+        $this->login('E001', self::NEW_PASSWORD)->assertOk();
+    }
+
+    public function test_修改密碼需要登入(): void
+    {
+        $this->putJson('/api/auth/password', [])->assertUnauthorized();
+    }
+
+    public function test_舊密碼錯誤回_422_且登入狀態不受影響(): void
+    {
+        $token = $this->login('E001')->json('token');
+
+        $this->changePassword($token, ['oldPassword' => 'wrong-Password1!'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('oldPassword');
+
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk();
+    }
+
+    public function test_新密碼不符規則回_422(): void
+    {
+        $token = $this->login('E001')->json('token');
+
+        $invalid = ['aa1!aaaaaaaa', 'AA1!AAAAAAAA', 'Aaa!aaaaaaaa', 'Aa1aaaaaaaaa', 'Aa1!aaaaaaa'];
+
+        foreach ($invalid as $password) {
+            $this->changePassword($token, ['newPassword' => $password, 'newPasswordConfirmation' => $password])
+                ->assertStatus(422)
+                ->assertJsonValidationErrors('newPassword');
+        }
+    }
+
+    public function test_新密碼不可與舊密碼相同(): void
+    {
+        $token = $this->login('E001')->json('token');
+
+        $this->changePassword($token, [
+            'newPassword' => self::PASSWORD,
+            'newPasswordConfirmation' => self::PASSWORD,
+        ])->assertStatus(422)->assertJsonValidationErrors('newPassword');
+    }
+
+    public function test_兩次新密碼不一致回_422(): void
+    {
+        $token = $this->login('E001')->json('token');
+
+        $this->changePassword($token, ['newPasswordConfirmation' => 'Different!Pass12'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('newPasswordConfirmation');
+    }
 }

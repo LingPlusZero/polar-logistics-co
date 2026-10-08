@@ -39,7 +39,7 @@ const router = createRouter({
         {
           path: 'password',
           name: 'password',
-          component: () => import('../views/PlaceholderView.vue'),
+          component: () => import('../views/PasswordView.vue'),
           meta: { title: '修改密碼', permission: 'password.change' },
         },
         // 選單上的頁面，頁面尚未完成的先顯示「建置中」

@@ -29,4 +29,6 @@ Route::post('/auth/login', [AuthController::class, 'login'])->middleware(['throt
 Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    // 比對舊密碼，同樣限流避免被拿來猜密碼
+    Route::put('/auth/password', [AuthController::class, 'changePassword'])->middleware('throttle:10,1');
 });

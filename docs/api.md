@@ -52,9 +52,12 @@
 - POST `/api/auth/login` 登入 → 200 `{ token, elf }`；`elf` 欄位見下方 me；帳號不存在或密碼錯誤都回 401 `{"message":"帳號或密碼錯誤"}`（不透露帳號是否存在）、缺欄位回 422；每個 IP 每分鐘 10 次
 - POST `/api/auth/logout` 登出（需帶權杖）→ 204，權杖立即失效
 - GET `/api/auth/me` 目前登入者（需帶權杖）→ 200 `{ id, number, name, departmentId, department, rank, permissions }`；未登入或權杖失效回 401
+- PUT `/api/auth/password` 修改密碼（需帶權杖、`password.change`）→ 204；body `{ oldPassword, newPassword, newPasswordConfirmation }`；驗證失敗回 422 `{ message, errors: { 欄位: [訊息] } }`（舊密碼錯誤也是 422，不用 401，避免前端誤判登入失效）；每個 IP 每分鐘 10 次
+  - 新密碼規則：至少 12 字元（≤72），且各一個大寫、小寫、數字、特殊符號，不可與舊密碼相同，兩次輸入需一致
+  - 修改後該精靈所有權杖立即失效（包含目前這一組），需用新密碼重新登入
 - 權限（`permissions`，由 `Elf::permissions()` 依職級與部門計算，前端選單依此顯示）：
   - 所有人：`leave.apply`、`password.change`
   - 部長、副聖誕老人：`leave.review`
   - 人力資源部：`elf.roster`、`elf.leave`、`elf.complaint`、`elf.attendance`、`career.manage`、`reindeer.manage`
   - 馴鹿管理部：`reindeer.manage`
-- 測試：tests/Feature/AuthTest.php
+- 測試：tests/Feature/AuthTest.php（含修改密碼）

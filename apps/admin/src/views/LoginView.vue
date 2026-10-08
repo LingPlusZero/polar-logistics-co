@@ -12,6 +12,9 @@ const { login } = useAuth()
 const number = ref('')
 const password = ref('')
 const errorMessage = ref('')
+
+// 從其他頁面導回登入頁時帶的提示（例如改完密碼）
+const notice = route.query.notice === 'password-changed' ? '密碼已更新，請使用新密碼重新登入。' : ''
 const isSubmitting = ref(false)
 
 // 只接受站內路徑，避免被帶去其他網站
@@ -74,6 +77,7 @@ const submit = async () => {
         />
       </label>
 
+      <p v-if="notice" class="login__notice" role="status">{{ notice }}</p>
       <p v-if="errorMessage" class="login__error" role="alert">{{ errorMessage }}</p>
 
       <button class="login__submit" type="submit" :disabled="isSubmitting || !number || !password">
@@ -145,6 +149,14 @@ const submit = async () => {
 .login__input:focus-visible {
   outline: 2px solid var(--color-navy);
   outline-offset: 1px;
+}
+
+.login__notice {
+  margin-bottom: 1rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--color-ice-dark);
+  border-left: 3px solid var(--color-navy);
 }
 
 .login__error {

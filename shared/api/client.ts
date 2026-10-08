@@ -6,6 +6,7 @@ export interface ApiClient {
     login(number: string, password: string): Promise<AuthSession>
     logout(): Promise<void>
     me(): Promise<ElfProfile>
+    changePassword(oldPassword: string, newPassword: string, newPasswordConfirmation: string): Promise<void>
   }
   career: {
     list(): Promise<Career[]>

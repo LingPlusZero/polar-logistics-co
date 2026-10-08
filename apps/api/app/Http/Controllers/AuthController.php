@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\ElfProfileResource;
 use App\Models\Elf;
@@ -33,6 +34,27 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->forceFill(['api_token' => null])->save();
+
+        return response()->noContent();
+    }
+
+    // 舊密碼錯誤回 422 而不是 401：401 代表登入失效，前端會因此把人登出
+    public function changePassword(ChangePasswordRequest $request)
+    {
+        $elf = $request->user();
+
+        if (! Hash::check($request->validated('oldPassword'), $elf->password)) {
+            return response()->json([
+                'message' => '舊密碼錯誤',
+                'errors' => ['oldPassword' => ['舊密碼錯誤']],
+            ], 422);
+        }
+
+        // password 欄位有 hashed cast，指派時自動雜湊
+        $elf->password = $request->validated('newPassword');
+        // 改密碼後讓所有登入失效，包含目前這一組，必須用新密碼重新登入
+        $elf->api_token = null;
+        $elf->save();
 
         return response()->noContent();
     }

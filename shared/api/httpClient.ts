@@ -18,7 +18,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (!response.ok) {
     // 優先使用後端的錯誤訊息（驗證失敗、查無帳號等）
     const payload = await response.json().catch(() => null)
-    throw new ApiError(response.status, payload?.message ?? `API ${method} ${path} 失敗：${response.status}`)
+    throw new ApiError(
+      response.status,
+      payload?.message ?? `API ${method} ${path} 失敗：${response.status}`,
+      payload?.errors,
+    )
   }
 
   return response.status === 204 ? (undefined as T) : response.json()
@@ -29,6 +33,8 @@ export const httpClient: ApiClient = {
     login: (number, password) => request('POST', '/auth/login', { number, password }),
     logout: () => request('POST', '/auth/logout'),
     me: () => request('GET', '/auth/me'),
+    changePassword: (oldPassword, newPassword, newPasswordConfirmation) =>
+      request('PUT', '/auth/password', { oldPassword, newPassword, newPasswordConfirmation }),
   },
   career: {
     list: () => request('GET', '/career'),
