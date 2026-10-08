@@ -3,8 +3,12 @@
 虛構的聖誕老人物流公司，官網與精靈管理系統。
 
 ## Demo
-- 官網：（待部署）
-- 精靈管理系統：（待部署）
+部署到 GitHub Pages 的靜態 Demo，資料僅存在瀏覽器。
+
+- 官網：`https://<GitHub 帳號>.github.io/<倉庫名稱>/`
+- 精靈管理系統：（建置中）
+
+首次啟用需到倉庫 Settings → Pages，Source 選「GitHub Actions」；之後 push 到 `main` 會自動部署，細節見 `docs/demo-strategy.md`。
 
 ## 截圖
 （待補）

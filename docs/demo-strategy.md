@@ -19,3 +19,14 @@
 - 避免重新整理 404
 - 所有前端部署到同一個 Pages，用子路徑區分
 - README 放連結、截圖與「如何本機用 Docker 跑完整版」
+
+## 部署流程（GitHub Actions）
+- workflow：`.github/workflows/deploy-pages.yml`，push 到 `main` 或手動觸發（workflow_dispatch）
+- 建置腳本：`scripts/build-pages.sh`，依序建置各前端並輸出到 `_site/`
+  - 官網在站台根目錄（`/<倉庫名稱>/`）
+  - 精靈管理系統預計在 `/<倉庫名稱>/admin/`，目前在腳本中註解，完成後開啟，並同步開啟官網頁尾「員工專區」（`SiteFooter.vue` 的 `IS_ADMIN_ENABLED`）
+- 子路徑由環境變數 `VITE_BASE` 決定（workflow 以倉庫名稱帶入，優先於 `.env.demo`），倉庫改名不需改檔案
+- 每次建置使用 `npm ci`，依 `package-lock.json` 安裝
+- 路由使用 hash history，重新整理不會 404
+- 本機模擬：`PAGES_BASE=/polar-logistics-co sh scripts/build-pages.sh`（需 Node 22），產物在 `_site/`
+- 首次啟用：GitHub 倉庫 Settings → Pages → Source 選「GitHub Actions」
