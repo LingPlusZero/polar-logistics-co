@@ -23,8 +23,10 @@ export default defineConfig(({ mode }) => {
       // 讓前端連得上 api/，docker 內指向 nginx 容器
       proxy: {
         '/api': {
-          target: env.API_PROXY_TARGET || 'http://localhost:8080',
+          target: env.API_PROXY_TARGET || 'https://localhost:8443',
           changeOrigin: true,
+          // 後端使用開發用自簽憑證，proxy 這一段不驗證憑證（連線仍是加密的）
+          secure: false,
         },
       },
       // Windows 上 bind mount 收不到檔案事件，需改用輪詢

@@ -1,14 +1,16 @@
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
     // GitHub Pages 以子路徑區分各前端，由 .env.demo 指定
     base: env.VITE_BASE || '/',
-    plugins: [vue()],
+    // 開發伺服器走 HTTPS（自簽憑證），登入密碼才不會在瀏覽器到 dev server 之間以明碼傳輸
+    plugins: [vue(), ...(command === 'serve' ? [basicSsl()] : [])],
     resolve: {
       alias: {
         '@shared': fileURLToPath(new URL('../../shared', import.meta.url)),
@@ -23,8 +25,10 @@ export default defineConfig(({ mode }) => {
       // 讓前端連得上 api/，docker 內指向 nginx 容器
       proxy: {
         '/api': {
-          target: env.API_PROXY_TARGET || 'http://localhost:8080',
+          target: env.API_PROXY_TARGET || 'https://localhost:8443',
           changeOrigin: true,
+          // 後端使用開發用自簽憑證，proxy 這一段不驗證憑證（連線仍是加密的）
+          secure: false,
         },
       },
       // Windows 上 bind mount 收不到檔案事件，需改用輪詢
