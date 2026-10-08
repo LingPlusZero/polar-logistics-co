@@ -1,1 +1,92 @@
-[]
+[
+    {
+        "year": 2016,
+        "giftsDelivered": 1950000000,
+        "growthRate": 6.4,
+        "onTimeRate": 99.96,
+        "completeRate": 99.93,
+        "feedbackRate": 100,
+        "note": "持續優化中"
+    },
+    {
+        "year": 2017,
+        "giftsDelivered": 1862000000,
+        "growthRate": 3.1,
+        "onTimeRate": 99.95,
+        "completeRate": 99.92,
+        "feedbackRate": 100,
+        "note": null
+    },
+    {
+        "year": 2018,
+        "giftsDelivered": 1882000000,
+        "growthRate": 3.1,
+        "onTimeRate": 99.97,
+        "completeRate": 99.94,
+        "feedbackRate": 100,
+        "note": "持續優化中"
+    },
+    {
+        "year": 2019,
+        "giftsDelivered": 2056000000,
+        "growthRate": 5,
+        "onTimeRate": 99.96,
+        "completeRate": 99.94,
+        "feedbackRate": 100,
+        "note": null
+    },
+    {
+        "year": 2020,
+        "giftsDelivered": 1996000000,
+        "growthRate": 5.5,
+        "onTimeRate": 99.95,
+        "completeRate": 99.92,
+        "feedbackRate": 100,
+        "note": null
+    },
+    {
+        "year": 2021,
+        "giftsDelivered": 2124000000,
+        "growthRate": 4.3,
+        "onTimeRate": 99.96,
+        "completeRate": 99.93,
+        "feedbackRate": 100,
+        "note": "持續優化中"
+    },
+    {
+        "year": 2022,
+        "giftsDelivered": 2126000000,
+        "growthRate": 5.4,
+        "onTimeRate": 99.92,
+        "completeRate": 99.89,
+        "feedbackRate": 100,
+        "note": null
+    },
+    {
+        "year": 2023,
+        "giftsDelivered": 2136000000,
+        "growthRate": 6.3,
+        "onTimeRate": 99.96,
+        "completeRate": 99.93,
+        "feedbackRate": 100,
+        "note": null
+    },
+    {
+        "year": 2024,
+        "giftsDelivered": 2096000000,
+        "growthRate": 5.9,
+        "onTimeRate": 99.94,
+        "completeRate": 99.91,
+        "feedbackRate": 100,
+        "note": "持續優化中"
+    },
+    {
+        "year": 2025,
+        "giftsDelivered": 2230000000,
+        "growthRate": 6.7,
+        "onTimeRate": 99.97,
+        "completeRate": 99.95,
+        "feedbackRate": 100,
+        "note": null
+    }
+]

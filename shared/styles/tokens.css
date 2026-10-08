@@ -1,8 +1,15 @@
 /* 品牌色與字體，來源：docs/brand.md */
 :root {
   --color-navy: #0B2545;
+  --color-navy-light: #13315C;
   --color-ice: #F4F8FB;
+  --color-ice-dark: #DCE6EE;
   --color-red: #C8102E; /* 只當強調色 */
+  --color-text-muted: #5B6B7F;
 
   --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+
+  --header-height: 4rem;
+  /* Demo 橫幅顯示時由 DemoBanner 改寫，固定在頂部的元素需避開 */
+  --banner-height: 0rem;
 }

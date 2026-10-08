@@ -25,7 +25,10 @@ export const httpClient: ApiClient = {
     update: (id, input) => request('PUT', `/career/${id}`, input),
     remove: (id) => request('DELETE', `/career/${id}`),
   },
+  department: {
+    list: () => request('GET', '/department'),
+  },
   statics: {
-    annual: () => request('GET', '/statics/annual'),
+    annual: () => request('GET', '/statics/annual?limit=10'),
   },
 }

@@ -1,0 +1,81 @@
+/* 官網共用版面：容器、區塊、按鈕 */
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  padding-top: calc(var(--header-height) + var(--banner-height));
+}
+
+.container {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.section {
+  padding: 3.5rem 0;
+}
+
+.section__title {
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+  line-height: 1.4;
+}
+
+.section__title::after {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 0.1875rem;
+  margin-top: 0.75rem;
+  background: var(--color-red);
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 0.125rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn--primary {
+  color: var(--color-ice);
+  background: var(--color-red);
+}
+
+.btn--primary:hover {
+  background: #A60D26;
+}
+
+.btn--outline {
+  color: var(--color-ice);
+  border-color: var(--color-ice);
+}
+
+.btn--outline:hover {
+  color: var(--color-navy);
+  background: var(--color-ice);
+}
+
+@media (min-width: 48rem) {
+  .container {
+    padding: 0 2rem;
+  }
+
+  .section {
+    padding: 5rem 0;
+  }
+
+  .section__title {
+    font-size: 1.875rem;
+  }
+}
