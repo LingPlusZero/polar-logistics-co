@@ -3,7 +3,7 @@ import { LineChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import { init, use, type ECharts, type EChartsCoreOption } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 // 只註冊會用到的元件，減少打包體積
 use([LineChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
@@ -18,11 +18,44 @@ const root = ref<HTMLElement | null>(null)
 
 let chart: ECharts | null = null
 let resizeObserver: ResizeObserver | null = null
+let visibilityObserver: IntersectionObserver | null = null
 
-const render = () => {
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// 只有第一次繪製（進入畫面時）才播放動畫；之後因 RWD 重算設定時關閉，避免曲線重畫一次
+const render = (animate: boolean) => {
   if (chart && root.value) {
-    chart.setOption(props.buildOption(root.value.clientWidth), true)
+    chart.setOption(
+      { ...props.buildOption(root.value.clientWidth), animation: animate && !reduceMotion() },
+      true,
+    )
   }
+}
+
+const start = () => {
+  if (!root.value || chart) {
+    return
+  }
+
+  chart = init(root.value)
+  render(true)
+
+  // 容器寬度改變時（RWD、旋轉螢幕）才重新計算尺寸與設定。
+  // ResizeObserver 一開始觀察就會觸發一次，若此時重設選項會把剛開始的進場動畫中斷，所以寬度沒變就略過
+  let lastWidth = root.value.clientWidth
+
+  resizeObserver = new ResizeObserver(() => {
+    const width = root.value?.clientWidth ?? lastWidth
+
+    if (width === lastWidth) {
+      return
+    }
+
+    lastWidth = width
+    chart?.resize()
+    render(false)
+  })
+  resizeObserver.observe(root.value)
 }
 
 onMounted(() => {
@@ -30,21 +63,23 @@ onMounted(() => {
     return
   }
 
-  chart = init(root.value)
-  render()
+  if (!('IntersectionObserver' in window)) {
+    start()
+    return
+  }
 
-  // 容器寬度改變時（RWD、旋轉螢幕）重新計算尺寸與設定
-  resizeObserver = new ResizeObserver(() => {
-    chart?.resize()
-    render()
-  })
-  resizeObserver.observe(root.value)
+  // 捲到圖表區塊時才建立圖表，動畫才會在使用者看得到時播放
+  visibilityObserver = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      visibilityObserver?.disconnect()
+      start()
+    }
+  }, { threshold: 0.3 })
+  visibilityObserver.observe(root.value)
 })
 
-// 資料更新時重畫
-watch(() => props.buildOption, render)
-
 onBeforeUnmount(() => {
+  visibilityObserver?.disconnect()
   resizeObserver?.disconnect()
   chart?.dispose()
 })

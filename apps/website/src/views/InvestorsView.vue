@@ -70,7 +70,10 @@ const buildOption = (width: number): EChartsCoreOption => {
     data: statics.value.map((row) => row[key]),
     itemStyle: { color },
     lineStyle: { color, width: 2 },
-    symbolSize: 6,
+    // 不顯示資料點圓圈（含滑過時），數值改由 tooltip 提供
+    symbol: 'none',
+    // 滑過圖例時不連動強調對應折線
+    legendHoverLink: false,
     tooltip: { valueFormatter },
     ...extra,
   })
@@ -91,10 +94,17 @@ const buildOption = (width: number): EChartsCoreOption => {
 
   return {
     textStyle: { fontFamily: 'Noto Sans TC, sans-serif' },
+    animationDuration: 1800,
+    animationEasing: 'cubicOut',
     color: Object.values(COLORS),
     legend: {
       top: 0,
       itemWidth: 18,
+      // 圖例僅作說明，不可點擊隱藏折線
+      selectedMode: false,
+      // 圖例用純線段，不帶圓點
+      icon: 'rect',
+      itemHeight: 3,
       textStyle: { fontSize: isNarrow ? 11 : 13 },
     },
     tooltip: { trigger: 'axis' },
@@ -314,6 +324,7 @@ onMounted(async () => {
 }
 
 .metric-notes dt sup {
+  line-height: 0;
   color: var(--color-red);
 }
 
@@ -408,7 +419,7 @@ onMounted(async () => {
   }
 
   .metric-notes {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .care {
