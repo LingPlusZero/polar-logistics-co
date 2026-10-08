@@ -4,7 +4,7 @@
 
 ## 版面
 - `SiteHeader`：fixed、小於 48rem 為漢堡選單、換頁與按 Esc 會收起
-- `SiteFooter`：員工專區網址來自 `VITE_ADMIN_URL`（見各 `.env`）
+- `SiteFooter`：員工專區網址來自 `VITE_ADMIN_URL`（見各 `.env`）；精靈管理系統完成前連結停用（`SiteFooter.vue` 的 `IS_ADMIN_ENABLED = false`，顯示為灰色不可點），完成後改成 true
 - Demo 橫幅 fixed，會設定 CSS 變數 `--banner-height`，讓頁首下移
 - 路由標題由 router `meta.title` 設定；Demo 模式用 hash history，避免 GitHub Pages 重新整理 404
 - RWD 斷點統一由小到大：`48rem`、`64rem`
@@ -21,6 +21,8 @@
 
 ## 投資人關係
 - `EChart`：echarts 6，只註冊 LineChart、Grid、Legend、Tooltip、CanvasRenderer；ResizeObserver 偵測寬度後重新產生設定
+- 圖表在捲到可見範圍（IntersectionObserver，30%）時才建立，折線由左向右展開（echarts 預設的 clip 進場動畫，1.8 秒）；之後因 RWD 重算設定不再重播，支援 `prefers-reduced-motion`
+- 注意：ResizeObserver 一開始觀察就會觸發一次，若在此時重設選項會中斷進場動畫，所以只在寬度真的改變時才重算
 - 五個指標合併一張折線圖：左軸禮物數（億份）、右軸一為成長率、右軸二為三個送達率（固定 99–100%，避免微幅波動被放大）
 - 窄螢幕（< 640px）隱藏第三條軸，數值看 tooltip
 - 圖表下方保留資料表，兼顧可讀性與無障礙
