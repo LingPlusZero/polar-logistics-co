@@ -6,6 +6,7 @@
 - 服務：`mysql`（8.4）、`php`（php:8.4-fpm-alpine，`docker/php/Dockerfile`）、`nginx`（1.27-alpine）、`website`、`admin`（node:22-alpine，跑 vite dev server）
 - 對外埠：官網 5173、管理系統 5174、API（nginx）8080、MySQL 33060
 - MySQL 用 33060：Windows 保留了 3232–3331 等埠段，3306–3399 附近容易綁不上
+- MySQL 只綁本機（`127.0.0.1:33060`），避免同一網路的其他裝置連到使用預設密碼的開發資料庫；正式環境需改用強密碼
 - vendor、node_modules 放 named volume，避免 Windows bind mount 拖慢速度
 - `.gitattributes` 把 `.sh`、`.conf`、`Dockerfile` 固定為 LF，避免 CRLF 讓容器腳本壞掉
 
