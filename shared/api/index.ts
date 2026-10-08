@@ -3,6 +3,9 @@ import { demoClient } from './demoClient'
 import { httpClient } from './httpClient'
 
 export type { ApiClient } from './client'
+export { ApiError } from './errors'
+export { PASSWORD_RULES, isValidPassword } from './password'
+export { clearSession, getStoredProfile, getToken, saveSession } from './session'
 export * from './types'
 
 export const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'

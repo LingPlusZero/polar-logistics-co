@@ -1,7 +1,12 @@
-import type { AnnualStatic, Career, CareerInput, Department } from './types'
+import type { AnnualStatic, AuthSession, Career, CareerInput, Department, ElfProfile } from './types'
 
 // 元件只認識這個介面，不知道資料來自 Laravel API 還是 JSON 快照
 export interface ApiClient {
+  auth: {
+    login(number: string, password: string): Promise<AuthSession>
+    logout(): Promise<void>
+    me(): Promise<ElfProfile>
+  }
   career: {
     list(): Promise<Career[]>
     create(input: CareerInput): Promise<Career>
