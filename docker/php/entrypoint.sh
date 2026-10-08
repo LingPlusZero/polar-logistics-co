@@ -13,6 +13,9 @@ grep -q '^APP_KEY=.\+' .env || php artisan key:generate --force
 # depends_on 的 healthcheck 已確保 MySQL 可連線，這裡直接 migrate
 php artisan migrate --force
 
+# seeder 以 updateOrCreate 撰寫，重複執行不會產生重複資料
+php artisan db:seed --force
+
 # bind mount 的 storage 由 root 建立，需開放給 php-fpm (www-data) 寫入
 mkdir -p storage/framework/cache/data storage/framework/views storage/logs bootstrap/cache
 chmod -R ug+rwX,o+rwX storage bootstrap/cache
