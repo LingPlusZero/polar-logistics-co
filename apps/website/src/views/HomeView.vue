@@ -219,7 +219,7 @@ const STATS = [
 
 .values__item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
   padding: 1.25rem;
   background: #fff;
