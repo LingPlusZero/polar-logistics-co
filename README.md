@@ -21,9 +21,10 @@ docker compose up -d          # 啟動全部服務，並自動 migrate
 | 服務 | 網址 |
 |---|---|
 | 官網 | http://localhost:5173 |
-| 精靈管理系統 | http://localhost:5174 |
-| API（nginx） | http://localhost:8080/api |
+| 精靈管理系統 | https://localhost:5174（自簽憑證，瀏覽器會警告） |
+| API（nginx） | https://localhost:8443/api（自簽憑證，瀏覽器會警告；8080 只轉址到 HTTPS） |
 | MySQL | localhost:33060（polar / polar） |
 
-- 前端開發環境預設為 Demo 模式（`.env.development`），要接真實 API 時把 `VITE_DEMO_MODE` 改成 `false`。
+- 前端開發環境的模式由各 app 的 `.env.development` 決定，`VITE_DEMO_MODE` 改 `true`／`false` 即可切換。
+- 首次開啟 HTTPS 網址，瀏覽器會警告自簽憑證，選「繼續前往」即可。
 - 首次啟動需安裝 composer 與 npm 套件，請稍等。

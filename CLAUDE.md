@@ -72,6 +72,7 @@ docker compose exec website npm run build:demo    # GitHub Pages 的 Demo 建置
 - api 與 view 不要混在一起
 - 遵守 coding-style (見`docs/coding-style.md`)
 - 各前端會共用品牌色、字體、部分元件與 api 抽象層，抽出來放進 shared/
+- 機敏資訊不要用明碼傳輸
 
 ## 重要文件連結
 
