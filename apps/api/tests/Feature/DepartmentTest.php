@@ -17,7 +17,7 @@ class DepartmentTest extends TestCase
 
         $this->getJson('/api/department')
             ->assertOk()
-            ->assertJsonCount(7)
+            ->assertJsonCount(8)
             ->assertJsonPath('0.name', '禮物包裝部')
             ->assertJsonPath('0.duty', '包禮物');
     }
@@ -37,6 +37,6 @@ class DepartmentTest extends TestCase
         $this->seed(DepartmentSeeder::class);
         $this->seed(DepartmentSeeder::class);
 
-        $this->assertSame(7, Department::count());
+        $this->assertSame(8, Department::count());
     }
 }

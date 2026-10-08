@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ElfRank;
 use App\Models\Career;
 use App\Models\Department;
+use App\Models\Elf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,6 +20,59 @@ class CareerTest extends TestCase
         parent::setUp();
 
         $this->department = Department::create(['name' => '禮物包裝部']);
+
+        // 寫入需要職缺管理權限（人力資源部），預設以人力資源部的精靈登入
+        $this->withToken($this->tokenFor('人力資源部'));
+    }
+
+    // 建立指定部門的精靈並回傳可用的權杖
+    private function tokenFor(string $departmentName): string
+    {
+        $department = Department::firstOrCreate(['name' => $departmentName]);
+        $token = 'test-token-'.$departmentName;
+
+        Elf::create([
+            'number' => 'T'.Elf::count(),
+            'name' => '測試精靈',
+            'department_id' => $department->id,
+            'rank' => ElfRank::Regular,
+            'hired_at' => '2020-01-01',
+            'password' => 'unused',
+        ])->forceFill(['api_token' => hash('sha256', $token)])->save();
+
+        return $token;
+    }
+
+    public function test_未登入不能新增編輯刪除職缺(): void
+    {
+        $career = $this->createCareer();
+        $this->flushHeaders();
+
+        $this->postJson('/api/career', $this->payload())->assertUnauthorized();
+        $this->putJson("/api/career/{$career->id}", $this->payload())->assertUnauthorized();
+        $this->deleteJson("/api/career/{$career->id}")->assertUnauthorized();
+
+        $this->assertSame(1, Career::count());
+    }
+
+    public function test_非人力資源部不能新增編輯刪除職缺(): void
+    {
+        $career = $this->createCareer();
+        $this->withToken($this->tokenFor('運輸部'));
+
+        $this->postJson('/api/career', $this->payload())->assertForbidden();
+        $this->putJson("/api/career/{$career->id}", $this->payload())->assertForbidden();
+        $this->deleteJson("/api/career/{$career->id}")->assertForbidden();
+
+        $this->assertSame(1, Career::count());
+    }
+
+    public function test_未登入仍可讀取職缺清單(): void
+    {
+        $this->createCareer();
+        $this->flushHeaders();
+
+        $this->getJson('/api/career')->assertOk()->assertJsonCount(1);
     }
 
     private function payload(array $overrides = []): array

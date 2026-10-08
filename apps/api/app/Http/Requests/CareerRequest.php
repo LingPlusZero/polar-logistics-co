@@ -8,8 +8,8 @@ class CareerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // 精靈管理系統的登入驗證尚未實作，之後在這裡接上權限判斷
-        return true;
+        // 路由的 RequirePermission 已擋過一次，這裡再確認一次，避免之後路由調整時漏掉
+        return $this->user()?->hasPermission('career.manage') ?? false;
     }
 
     public function rules(): array

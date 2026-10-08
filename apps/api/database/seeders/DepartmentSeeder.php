@@ -16,6 +16,8 @@ class DepartmentSeeder extends Seeder
         ['name' => '客戶體驗部', 'duty' => '處理「我沒收到禮物」'],
         ['name' => '運輸部', 'duty' => '騎雪橇'],
         ['name' => '人力資源部', 'duty' => '精靈HR'],
+        // 非業務部門，副聖誕老人所屬；docs/brand.md 未列，無工作內容
+        ['name' => '董事會', 'duty' => null],
     ];
 
     public function run(): void

@@ -10,9 +10,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AnnualStaticSeeder::class,
-            // 職缺依賴部門，須排在 DepartmentSeeder 之後
+            // 職缺、精靈依賴部門，須排在 DepartmentSeeder 之後
             DepartmentSeeder::class,
             CareerSeeder::class,
+            ElfSeeder::class,
         ]);
     }
 }
