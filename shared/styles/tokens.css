@@ -1,0 +1,8 @@
+/* 品牌色與字體，來源：docs/brand.md */
+:root {
+  --color-navy: #0B2545;
+  --color-ice: #F4F8FB;
+  --color-red: #C8102E; /* 只當強調色 */
+
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
