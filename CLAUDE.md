@@ -40,19 +40,6 @@ PHP、composer 等服務全部在容器內執行
 - Laravel 移除純API不會用到的檔案
 - 前端 vite.config 設定 proxy，讓前端連得上 api/
 
-## 骨架技術細節
-- docker-compose 服務：`mysql`（8.4，host 埠 33060，因 Windows 保留 3232–3331 等範圍而避開）、`php`（php:8.4-fpm-alpine，`docker/php/Dockerfile`）、`nginx`（8080 → Laravel）、`website`（5173）、`admin`（5174）
-- php 容器 `docker/php/entrypoint.sh`：自動複製 .env、`composer install`、`key:generate`、`migrate --force`
-- vendor、node_modules 放 named volume，避免 Windows bind mount 變慢
-- apps/api：已移除 views、resources、vite、User 相關檔案；路由在 `routes/api.php`（前綴 `/api`）；session=array、cache=file、queue=sync，不依賴資料表
-- 前端（website、admin）：Vue 3 + Vue Router 4 + Vite + TypeScript
-  - `vite.config.ts`：`/api` proxy 到 `API_PROXY_TARGET`（docker 內為 nginx 容器）、`@shared` alias 指向 `shared/`、`usePolling` 處理 Windows 檔案監聽
-  - env：`.env`（VITE_DEMO_MODE=false）、`.env.development`（true）、`.env.demo`（true + `VITE_BASE` 子路徑，`npm run build:demo`）
-  - Demo 模式路由改用 hash history，避免 GitHub Pages 重新整理 404
-- shared/api：`ApiClient` 介面、`httpClient`（打 Laravel）、`demoClient`（讀 `demo/data/*.json`，寫入存 sessionStorage）、`index.ts` 依 `VITE_DEMO_MODE` 匯出 `api`
-- shared/components/DemoBanner.vue：Demo 橫幅，文案照 `docs/demo-strategy.md`
-- shared 內的檔案可 import vue：vite 用 `resolve.dedupe`、tsconfig 用 `paths` 指向各 app 的 node_modules/vue；其他套件需同樣在各 app 設定
-
 ## 常用指令
 ```sh
 docker compose up -d                              # 全部服務（含自動 migrate）
@@ -97,7 +84,9 @@ docker compose exec website npm run build:demo    # GitHub Pages 的 Demo 建置
 - DEMO 說明：`docs/demo-strategy.md`
 - db scheme：`docs/db-scheme.md`
 - api 清單：`docs/api.md`
-- 架構：此文件
+- 官網實作細節：`docs/website-implementation.md`
+- 架構概要：此文件
+- 架構與技術細節：`docs/architecture.md`
 
 ## 文件同步事項
 - 用清單式寫法
