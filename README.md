@@ -2,6 +2,42 @@
 
 虛構的聖誕老人物流公司，官網與精靈管理系統。
 
+## 技術棧
+- 後端：Laravel 13（純 API）
+- 前端：Vue 3 + Vue Router + Vite + TypeScript
+- 伺服器：nginx 1.27
+- 資料庫：MySQL 8.4
+- 環境：Docker
+
+## 專案結構
+```
+polar-logistics-co/
+├── apps/
+│   ├── api/        # Laravel 13 純 API
+│   ├── website/    # 官網
+│   └── admin/      # 精靈管理系統（內部系統）
+├── shared/         # 品牌色／字體、共用元件、api 抽象層
+├── docker/         # php、nginx 設定
+├── docs/           # 設定與技術文件
+├── scripts/        # GitHub Pages 建置腳本
+└── docker-compose.yml
+```
+
+## 文件
+- 設定與文案（唯一來源）：
+  - [品牌與視覺規範](docs/brand.md)
+  - [官網設定](docs/website.md)
+  - [精靈管理系統設定](docs/admin.md)
+- 技術細節：
+  - [架構](docs/architecture.md)
+  - [資料庫](docs/db-scheme.md)
+  - [API 清單](docs/api.md)
+  - [官網實作](docs/website-implementation.md)
+  - [管理系統實作](docs/admin-implementation.md)
+- 其他：
+  - [Demo 策略](docs/demo-strategy.md)
+  - [程式碼風格](docs/coding-style.md)
+
 ## Demo
 部署到 GitHub Pages 的靜態 Demo，資料僅存在瀏覽器。
 
@@ -11,7 +47,36 @@
 首次啟用需到倉庫 Settings → Pages，Source 選「GitHub Actions」；之後 push 到 `main` 會自動部署，細節見 `docs/demo-strategy.md`。
 
 ## 截圖
-（待補）
+### 官網
+<table>
+  <tr>
+    <th>首頁</th>
+    <th>投資人關係</th>
+    <th>人才招募</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/website-home.webp" width="260"></td>
+    <td valign="top"><img src="docs/screenshots/website-investors.webp" width="260"></td>
+    <td valign="top"><img src="docs/screenshots/website-careers.webp" width="260"></td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <th>手機版（RWD）</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/website-rwd.webp" width="240"></td>
+  </tr>
+</table>
+
+### 精靈管理系統
+| 登入 | 首頁 |
+|---|---|
+| <img src="docs/screenshots/admin-login.webp" width="400"> | <img src="docs/screenshots/admin-home.webp" width="400"> |
+
+| 管理表格（動力單位管理）|
+|---|
+| <img src="docs/screenshots/admin-reindeer.webp" width="600"> |
 
 ## 如何本機用 Docker 跑完整版
 ```sh
