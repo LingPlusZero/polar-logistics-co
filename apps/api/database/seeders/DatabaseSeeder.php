@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             ElfSeeder::class,
             // 申訴紀錄依賴精靈
             ComplaintSeeder::class,
+            AttendanceSeeder::class,
         ]);
     }
 }

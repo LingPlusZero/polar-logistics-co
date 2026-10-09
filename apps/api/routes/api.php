@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnnualStaticController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ComplaintController;
@@ -41,6 +42,10 @@ Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->gro
         Route::post('/complaint/{complaint}/close', [ComplaintController::class, 'close']);
     });
 });
+
+// 精靈出勤紀錄：只有列表，需人力資源部權限
+Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, RequirePermission::class.':elf.attendance'])
+    ->get('/attendance', [AttendanceController::class, 'index']);
 Route::get('/statics/annual', [AnnualStaticController::class, 'index']);
 Route::get('/department', [DepartmentController::class, 'index']);
 
