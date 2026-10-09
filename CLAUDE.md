@@ -86,6 +86,7 @@ docker compose exec website npm run build:demo    # GitHub Pages 的 Demo 建置
 - db scheme：`docs/db-scheme.md`
 - api 清單：`docs/api.md`
 - 官網實作細節：`docs/website-implementation.md`
+- 精靈管理系統實作細節：`docs/admin-implementation.md`
 - 架構概要：此文件
 - 架構與技術細節：`docs/architecture.md`
 

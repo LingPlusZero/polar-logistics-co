@@ -38,6 +38,19 @@
 - 資料由 `DepartmentSeeder` 依 docs/brand.md 建立
 - 測試：tests/Feature/DepartmentTest.php
 
+### api/elf 精靈名冊
+- 全部端點需帶 `Authorization: Bearer <token>` 且有 `elf.roster`（人力資源部）；未登入回 401，沒有權限回 403
+- 欄位：`id`、`number`（精靈編號，`E` + 至少 3 位數字，唯一，新增時由系統自動產生）、`name`（≤50）、`departmentId`（必填，須為既有部門）、`department`（唯讀，部門名稱）、`rank`（職稱：實習精靈／正式精靈／資深精靈／部長／副聖誕老人）、`hiredAt`（到職日 `YYYY-MM-DD`，不可晚於今天）、`status`（正常／請假／可能失蹤）、`note`（選填，≤2000）；不回傳密碼與權杖，年資不回傳（由 `hiredAt` 計算）
+- 不可修改欄位：`number`、`hiredAt`（年資由它而來）。`number` 新增與修改都不接受（送來也忽略），新增時取 E 開頭編號的最大數字 + 1（`Elf::nextNumber()`，至少 3 位數，在交易內計算）；`hiredAt` 只在 POST 驗證，PUT 即使帶了也忽略
+- `status` 的「請假」是有請假申請且正值假期才會顯示，不能手動設定：新增與修改只接受「正常」「可能失蹤」，傳「請假」回 422；目前為請假狀態的精靈修改時不驗證也不更動 `status`。請假單功能完成後，由請假單算出（目前尚未實作）
+- GET `/api/elf` 名冊（搜尋、篩選、排序、分頁都在後端）→ 200 `{ items, total, page, perPage, lastPage }`（不包 `data`）；`page` 超出範圍時以資料庫分頁行為回傳該頁（可能為空）
+  - 查詢參數（皆選填）：`search`（精靈編號或姓名模糊搜尋，≤50，`%` `_` 當一般字元）、`departmentId`、`sort`（`number`｜`department`｜`seniority`，預設 `number`）、`order`（`asc`｜`desc`，預設 `asc`）、`page`（預設 1）、`perPage`（預設 10，1–50）；參數不合法回 422
+  - 年資越高＝到職日越早，所以 `sort=seniority&order=desc` 是年資高到低；同分時以編號升冪，分頁順序才穩定
+- POST `/api/elf` 新增 → 201，回傳該筆；新精靈使用預設密碼（`Elf::DEFAULT_PASSWORD`），需自行修改
+- PUT `/api/elf/{id}` 修改 → 200，回傳該筆（需帶 `name`、`departmentId`、`rank`、`status`，`note` 選填）
+- DELETE `/api/elf/{id}` 刪除 → 204；刪除自己回 422 `{"message":"不能刪除自己"}`
+- 測試：tests/Feature/ElfTest.php
+
 ### api/statics/annual 年度統計
 - 欄位：`year`、`giftsDelivered`（份）、`growthRate`（%）、`onTimeRate`（%）、`completeRate`（%）、`feedbackRate`（%）、`note`（可為 null）
 - GET `/api/statics/annual?limit=10` 年度統計 → 200，取最新 `limit` 年（預設 10，1–50），由舊到新排序
