@@ -47,3 +47,12 @@
 - 我要申訴頁 `views/ComplaintFileView.vue`（`complaint.file`，所有人）：只填被申訴人編號與事由；送出後用 API 回傳的姓名顯示「已送出對 ○○（編號）的申訴」，讓申訴人確認沒輸錯
 - 分頁元件抽成 `components/PaginationBar.vue`（名冊、申訴紀錄共用）；表格、提示、文字連結等清單頁共用樣式放在 `src/styles/controls.css`
 - Demo：`demoClient.complaint` 在前端模擬；資料 `shared/api/demo/data/complaint.json`（由 `ComplaintSeeder` 匯出）存 sessionStorage（`demo:complaint`），ComplaintSeeder 變動後需重新匯出；`elf.json` 的權限已加上 `complaint.file`
+
+## 閒置自動登出
+- 後端為準：權杖閒置 30 分鐘即失效（`AuthenticateElf`，見 `docs/api.md`），前端另有計時器讓畫面即時反應，兩邊的 30 分鐘要同步（`Elf::IDLE_TIMEOUT_MINUTES`、`useIdleLogout.ts` 的 `IDLE_TIMEOUT_MS`）
+- `composables/useIdleLogout.ts`（掛在 `AdminLayout`）：監聽 pointerdown／keydown／wheel／touchstart 記錄最後操作時間，每 15 秒用時間戳記比對（不用單一 30 分鐘 setTimeout，因背景分頁計時器會被延後），切回分頁時立刻檢查；超過就呼叫登出 API 後導回登入頁
+- 使用者有操作但沒打 API 時，後端看不到活動，所以每 5 分鐘（且期間有操作）呼叫一次 `auth.me()` 續命
+- 被動登出統一走 `composables/useSessionExpiry.ts` 的 `expireSession(notice)`：清本機登入狀態、導向 `/login?notice=...&redirect=目前頁面`，重新登入後回到原頁面
+- 已登入時任何 API 回 401：`httpClient` 呼叫 `notifyUnauthorized(reason)`（`shared/api/session.ts`，`main.ts` 註冊處理）；`reason === 'idle'` 顯示 `idle-timeout`，其餘顯示 `session-expired`；登入端點本身的 401（帳密錯誤）不算
+- 登入頁提示文案在 `LoginView.vue` 的 `NOTICES`（`password-changed`、`idle-timeout`、`session-expired`）
+- Demo 模式沒有後端，只有前端計時器作用

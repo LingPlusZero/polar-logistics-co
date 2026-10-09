@@ -71,6 +71,7 @@
 - 一律走 HTTPS（開發：`https://localhost:8443`，自簽憑證）；正式環境非 HTTPS 的 auth 請求回 403，見 architecture「傳輸加密」
 - 認證方式：`POST /api/auth/login` 取得權杖，之後在 header 帶 `Authorization: Bearer <token>`；權杖由 `AuthenticateElf` middleware 驗證
 - 權杖：隨機 60 字元，資料庫只存 sha256 雜湊（`elves.api_token`）；每名精靈同時只有一組有效權杖，重新登入或登出會讓舊的失效
+- 閒置自動登出：`elves.api_token_used_at` 記錄權杖最後使用時間（每次請求，至少隔 60 秒才寫入一次）；`AuthenticateElf` 發現閒置 ≥ `Elf::IDLE_TIMEOUT_MINUTES`（30 分鐘）就清掉權杖並回 401 `{ message, reason: "idle" }`，前端據此提示「閒置自動登出」；測試見 AuthTest
 - 密碼：以 bcrypt 雜湊儲存並比對，開發用預設密碼 `1qaz@WSX3edc`（見 db-scheme）；登入時只檢查有填、≤72，密碼規則（至少 12 字元，且各一個大寫、小寫、數字、特殊符號）留給設定新密碼時檢查。Demo 前端（demoClient）例外，密碼就是自己的精靈編號
 - POST `/api/auth/login` 登入 → 200 `{ token, elf }`；`elf` 欄位見下方 me；帳號不存在或密碼錯誤都回 401 `{"message":"帳號或密碼錯誤"}`（不透露帳號是否存在）、缺欄位回 422；每個 IP 每分鐘 10 次
 - POST `/api/auth/logout` 登出（需帶權杖）→ 204，權杖立即失效
