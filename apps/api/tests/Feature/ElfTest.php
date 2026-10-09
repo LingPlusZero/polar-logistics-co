@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ElfRank;
+use App\Models\Attendance;
 use App\Models\Department;
 use App\Models\Elf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -94,6 +95,25 @@ class ElfTest extends TestCase
             ->assertJsonPath('items.0.status', '正常')
             ->assertJsonMissingPath('items.0.password')
             ->assertJsonMissingPath('items.0.apiToken');
+    }
+
+    public function test_名冊帶最後出勤日_沒有紀錄為_null(): void
+    {
+        $worker = $this->createElf('運輸部', 'T001');
+        Attendance::create(['elf_id' => $worker->id, 'clock_in' => '2026-10-06 08:00:00', 'clock_out' => '2026-10-06 17:00:00']);
+        Attendance::create(['elf_id' => $worker->id, 'clock_in' => '2026-10-08 08:30:00', 'clock_out' => '2026-10-08 17:30:00']);
+
+        $byNumber = fn () => collect($this->getJson('/api/elf')->json('items'))->keyBy('number');
+
+        $this->assertSame('2026-10-08', $byNumber()['T001']['lastAttendedAt']);
+        $this->assertNull($byNumber()['T000']['lastAttendedAt']);
+
+        // 編輯後回傳的資料也帶最後出勤日
+        $this->putJson("/api/elf/{$worker->id}", $this->payload(['name' => '改名']))
+            ->assertOk()
+            ->assertJsonPath('lastAttendedAt', '2026-10-08');
+        // 新增的精靈還沒有出勤紀錄
+        $this->postJson('/api/elf', $this->payload())->assertCreated()->assertJsonPath('lastAttendedAt', null);
     }
 
     public function test_分頁(): void

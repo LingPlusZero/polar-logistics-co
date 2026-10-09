@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,10 @@ class ElfResource extends JsonResource
             'hiredAt' => $this->hired_at->toDateString(),
             'status' => $this->status->value,
             'note' => $this->note,
+            // 最後一次出勤的日期，由出勤紀錄算出（withMax／loadMax 帶入）；沒有紀錄為 null
+            'lastAttendedAt' => $this->attendances_max_clock_in
+                ? Carbon::parse($this->attendances_max_clock_in)->toDateString()
+                : null,
         ];
     }
 }

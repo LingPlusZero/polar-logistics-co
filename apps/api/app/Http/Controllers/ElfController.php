@@ -14,7 +14,7 @@ class ElfController extends Controller
 {
     public function index(ElfListRequest $request)
     {
-        $query = Elf::with('department');
+        $query = Elf::with('department')->withMax('attendances', 'clock_in');
 
         if ($search = $request->validated('search')) {
             // 搜尋字串中的 % _ 要跳脫，避免使用者輸入變成萬用字元
@@ -69,14 +69,14 @@ class ElfController extends Controller
             return $elf;
         });
 
-        return (new ElfResource($elf->load('department')))->response()->setStatusCode(Response::HTTP_CREATED);
+        return (new ElfResource($elf->load('department')->loadMax('attendances', 'clock_in')))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 
     public function update(ElfRequest $request, Elf $elf)
     {
         $elf->update($request->elfData());
 
-        return new ElfResource($elf->load('department'));
+        return new ElfResource($elf->load('department')->loadMax('attendances', 'clock_in'));
     }
 
     public function destroy(Request $request, Elf $elf)
