@@ -17,6 +17,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // 正式環境一律關閉詳細錯誤訊息（堆疊、SQL、檔案路徑），即使 .env 誤設 APP_DEBUG=true
+        if ($this->app->isProduction()) {
+            config(['app.debug' => false]);
+        }
+
         // 回傳純 JSON，不額外包一層 data
         JsonResource::withoutWrapping();
 

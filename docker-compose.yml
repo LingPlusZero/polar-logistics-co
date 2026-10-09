@@ -23,6 +23,8 @@ services:
       - ./apps/api:/var/www/html
       # vendor 放在 volume，避免 Windows bind mount 拖慢 composer 與執行速度
       - api-vendor:/var/www/html/vendor
+      # 關閉 PHP 的詳細錯誤輸出與版本資訊（資安），只把錯誤寫進 log
+      - ./docker/php/conf.d/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
     depends_on:
       mysql:
         condition: service_healthy
