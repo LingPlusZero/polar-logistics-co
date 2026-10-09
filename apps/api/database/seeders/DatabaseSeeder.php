@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             CareerSeeder::class,
             ElfSeeder::class,
+            // 申訴紀錄依賴精靈
+            ComplaintSeeder::class,
         ]);
     }
 }

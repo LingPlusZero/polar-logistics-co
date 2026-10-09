@@ -137,7 +137,7 @@ class AuthTest extends TestCase
         $this->assertContains('leave.review', $permissions('E004'));
 
         // 其他部門的實習精靈只有所有人都有的權限
-        $this->assertSame(['leave.apply', 'password.change'], $permissions('E020'));
+        $this->assertSame(['leave.apply', 'password.change', 'complaint.file'], $permissions('E020'));
 
         // 副聖誕老人可審核部長假單
         $this->assertContains('leave.review', $permissions('E001'));

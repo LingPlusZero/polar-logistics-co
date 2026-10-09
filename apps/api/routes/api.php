@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnnualStaticController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CareerController;
+use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\ElfController;
 use App\Http\Middleware\AuthenticateElf;
@@ -30,6 +31,16 @@ Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, Requi
         Route::put('/elf/{elf}', [ElfController::class, 'update']);
         Route::delete('/elf/{elf}', [ElfController::class, 'destroy']);
     });
+
+// 精靈被申訴紀錄：只有人力資源部能看與結案；申訴（我要申訴）所有登入者都可以，限流避免被洗版
+Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->group(function () {
+    Route::post('/complaint', [ComplaintController::class, 'store'])
+        ->middleware([RequirePermission::class.':complaint.file', 'throttle:10,1']);
+    Route::middleware(RequirePermission::class.':elf.complaint')->group(function () {
+        Route::get('/complaint', [ComplaintController::class, 'index']);
+        Route::post('/complaint/{complaint}/close', [ComplaintController::class, 'close']);
+    });
+});
 Route::get('/statics/annual', [AnnualStaticController::class, 'index']);
 Route::get('/department', [DepartmentController::class, 'index']);
 

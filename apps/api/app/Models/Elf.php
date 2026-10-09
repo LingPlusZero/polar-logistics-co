@@ -56,7 +56,7 @@ class Elf extends Model
     // 權限依職級與部門決定（docs/admin.md）；前端選單依此顯示
     public function permissions(): array
     {
-        $permissions = ['leave.apply', 'password.change'];
+        $permissions = ['leave.apply', 'password.change', 'complaint.file'];
 
         if ($this->rank->canReviewLeave()) {
             $permissions[] = 'leave.review';

@@ -21,7 +21,7 @@ class ElfRequest extends FormRequest
             'name' => ['required', 'string', 'max:50'],
             'departmentId' => ['required', 'integer', 'exists:department,id'],
             'rank' => ['required', Rule::enum(ElfRank::class)],
-            'note' => ['nullable', 'string', 'max:2000'],
+            'note' => ['nullable', 'string', 'max:500'],
         ];
 
         // 「請假」是有請假申請且正值假期才會有的狀態，不能手動設定，也不能手動改掉
