@@ -29,6 +29,7 @@
 - 新增／修改共用 `components/ElfFormDialog.vue`（有帶 `elf` 為編輯，到職日停用）；精靈編號欄位一律停用，新增時顯示「儲存後自動產生」，由後端產生（Demo 由 `demoClient` 用同樣規則產生）
 - 狀態「請假」不能手動改：表單只提供「正常／可能失蹤」，請假中顯示停用欄位且不送出 `status`
 - 年資由 `utils/seniority.ts` 以到職日算整月，不存資料庫
+- 最後出勤日欄位在年資之後，沒有出勤紀錄顯示「—」；Demo 的名冊快照不含這個欄位，`demoClient` 輸出時（列表、新增、修改）才依出勤紀錄算出（`withLastAttended`）
 - Demo：`demoClient.elf.list` 在前端模擬後端的篩選、排序、分頁；資料 `shared/api/demo/data/roster.json`（含到職日、狀態、備註）由 ElfSeeder 與 `ElfResource` 匯出，寫入存 sessionStorage（`demo:roster`），ElfSeeder 變動後需重新匯出
 
 ## 版面與選單

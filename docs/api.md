@@ -40,7 +40,7 @@
 
 ### api/elf 精靈名冊
 - 全部端點需帶 `Authorization: Bearer <token>` 且有 `elf.roster`（人力資源部）；未登入回 401，沒有權限回 403
-- 欄位：`id`、`number`（精靈編號，`E` + 至少 3 位數字，唯一，新增時由系統自動產生）、`name`（≤50）、`departmentId`（必填，須為既有部門）、`department`（唯讀，部門名稱）、`rank`（職稱：實習精靈／正式精靈／資深精靈／部長／副聖誕老人）、`hiredAt`（到職日 `YYYY-MM-DD`，不可晚於今天）、`status`（正常／請假／可能失蹤）、`note`（選填，≤500）；不回傳密碼與權杖，年資不回傳（由 `hiredAt` 計算）
+- 欄位：`id`、`number`（精靈編號，`E` + 至少 3 位數字，唯一，新增時由系統自動產生）、`name`（≤50）、`departmentId`（必填，須為既有部門）、`department`（唯讀，部門名稱）、`rank`（職稱：實習精靈／正式精靈／資深精靈／部長／副聖誕老人）、`hiredAt`（到職日 `YYYY-MM-DD`，不可晚於今天）、`status`（正常／請假／可能失蹤）、`note`（選填，≤500）、`lastAttendedAt`（最後出勤日 `YYYY-MM-DD`，唯讀，取該精靈出勤紀錄中最近一筆上班時間的日期，沒有紀錄為 null；列表用 `withMax` 一次查出，不會每列多一次查詢）；不回傳密碼與權杖，年資不回傳（由 `hiredAt` 計算）
 - 不可修改欄位：`number`、`hiredAt`（年資由它而來）。`number` 新增與修改都不接受（送來也忽略），新增時取 E 開頭編號的最大數字 + 1（`Elf::nextNumber()`，至少 3 位數，在交易內計算）；`hiredAt` 只在 POST 驗證，PUT 即使帶了也忽略
 - `status` 的「請假」是有請假申請且正值假期才會顯示，不能手動設定：新增與修改只接受「正常」「可能失蹤」，傳「請假」回 422；目前為請假狀態的精靈修改時不驗證也不更動 `status`。請假單功能完成後，由請假單算出（目前尚未實作）
 - GET `/api/elf` 名冊（搜尋、篩選、排序、分頁都在後端）→ 200 `{ items, total, page, perPage, lastPage }`（不包 `data`）；`page` 超出範圍時以資料庫分頁行為回傳該頁（可能為空）
