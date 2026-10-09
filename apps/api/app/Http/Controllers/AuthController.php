@@ -23,7 +23,7 @@ class AuthController extends Controller
 
         // 明碼只回傳一次，資料庫只存雜湊；重新登入會讓舊權杖失效
         $token = Str::random(60);
-        $elf->forceFill(['api_token' => hash('sha256', $token)])->save();
+        $elf->forceFill(['api_token' => hash('sha256', $token), 'api_token_used_at' => now()])->save();
 
         return response()->json([
             'token' => $token,

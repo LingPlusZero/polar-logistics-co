@@ -111,6 +111,28 @@ class AuthTest extends TestCase
         $this->withToken($token)->getJson('/api/auth/me')->assertStatus(401);
     }
 
+    public function test_閒置超過_30_分鐘權杖失效並回報原因(): void
+    {
+        $token = $this->login('E001')->json('token');
+
+        $this->travel(29)->minutes();
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk();
+
+        // 剛才的請求算活動，所以要再閒置 30 分鐘才會失效
+        $this->travel(29)->minutes();
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk();
+
+        $this->travel(30)->minutes();
+        $this->withToken($token)->getJson('/api/auth/me')
+            ->assertStatus(401)
+            ->assertJsonPath('reason', 'idle');
+
+        // 失效後權杖被清掉，再用同一組也只是一般的未登入
+        $this->withToken($token)->getJson('/api/auth/me')
+            ->assertStatus(401)
+            ->assertJsonMissingPath('reason');
+    }
+
     public function test_重新登入會讓舊權杖失效(): void
     {
         $old = $this->login('E001')->json('token');

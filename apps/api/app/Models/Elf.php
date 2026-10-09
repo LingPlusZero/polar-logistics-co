@@ -12,6 +12,9 @@ class Elf extends Model
     // 開發測試用的預設密碼（新增精靈與 ElfSeeder 共用），正式環境上線前必須改掉
     public const DEFAULT_PASSWORD = '1qaz@WSX3edc';
 
+    // 登入後閒置超過這麼久就自動登出（前端 IDLE_TIMEOUT_MS 要同步）
+    public const IDLE_TIMEOUT_MINUTES = 30;
+
     protected $table = 'elves';
 
     protected $fillable = ['number', 'name', 'department_id', 'rank', 'hired_at', 'status', 'note', 'password'];
@@ -25,6 +28,7 @@ class Elf extends Model
             'rank' => ElfRank::class,
             'status' => ElfStatus::class,
             'hired_at' => 'date',
+            'api_token_used_at' => 'datetime',
             // 寫入時自動雜湊
             'password' => 'hashed',
         ];
