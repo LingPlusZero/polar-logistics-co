@@ -18,6 +18,11 @@
 - migration：`2026_10_10_000001_create_complaint_table.php`
 - seeder：`ComplaintSeeder`（8 筆，E016 與 E017 互相申訴；表內已有資料就不灌入，須排在 ElfSeeder 之後）
 
+## attendance
+- id、elf_id（FK → elves.id，cascade on delete）、clock_in（上班時間，datetime，有索引）、clock_out（下班時間，datetime）、timestamps；工作時數不存欄位，由上下班時間計算
+- migration：`2026_10_12_000001_create_attendance_table.php`
+- seeder：`AttendanceSeeder`（約 200 筆，依執行當天往前產生，規則見 api.md；每次執行先清空再重灌，須排在 ElfSeeder 之後）
+
 ## reindeer
 
 ## career

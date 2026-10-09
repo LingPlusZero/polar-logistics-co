@@ -56,3 +56,8 @@
 - 已登入時任何 API 回 401：`httpClient` 呼叫 `notifyUnauthorized(reason)`（`shared/api/session.ts`，`main.ts` 註冊處理）；`reason === 'idle'` 顯示 `idle-timeout`，其餘顯示 `session-expired`；登入端點本身的 401（帳密錯誤）不算
 - 登入頁提示文案在 `LoginView.vue` 的 `NOTICES`（`password-changed`、`idle-timeout`、`session-expired`）
 - Demo 模式沒有後端，只有前端計時器作用
+
+## 精靈出勤紀錄
+- 頁面 `views/AttendanceView.vue`（`elf.attendance`）：唯讀列表 + 後端分頁（每頁 10 筆）；搜尋（精靈編號/姓名，300ms debounce）與部門篩選（做法同精靈名冊）；日期篩選（預設最近一週：今天往前 6 天到今天，用瀏覽器本地日期；起、迄皆可留空，「清除日期」會看到全部；改變就回第 1 頁，迄日 `min` 限制為起日。預設只是前端帶的查詢條件，API 本身沒有預設日期範圍）；排序用表頭按鈕（精靈編號、上班時間、下班時間、工作時數，四欄樣式一致；一開始都未標示排序，資料依預設的上班時間新到舊，點上班時間即回到此順序並標示），點同一欄切換升降冪，換欄時上班、下班時間先新到舊，編號與工作時數先升冪（工時短的在前，方便找出不足 8 小時的日子）
+- 工作時數不足 8 小時（`workMinutes < 480`）的整列背景 `#fff6d0`；表格上方放圖例說明底色意義，避免只靠顏色傳達
+- Demo：不存快照，`shared/api/demo/attendance.ts` 的 `generateAttendance` 依「今天」往前產生（同一個分頁只算一次，唯讀）；規則與 `AttendanceSeeder` 完全一致（含與 PHP 相同的 crc32 雜湊、時間範圍與失蹤精靈的最後出勤日），改一邊要改另一邊，所以 Demo 與真實資料在同一天看到的內容相同，GitHub Pages 上也不會過期

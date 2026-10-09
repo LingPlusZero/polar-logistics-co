@@ -61,6 +61,13 @@
 - 資料由 `ComplaintSeeder` 建立（表內已有資料就不灌入）：E016 夜櫻與 E017 晨露一直用小事投訴對方，共 8 筆，4 筆已結案、4 筆處理中
 - 測試：tests/Feature/ComplaintTest.php
 
+### api/attendance 精靈出勤紀錄
+- 沒有真正的打卡機制，只有列表（沒有新增、修改、刪除）；需帶 `Authorization: Bearer <token>` 且有 `elf.attendance`（人力資源部），未登入回 401，沒有權限回 403
+- 欄位：`id`、`elfNumber`／`elfName`、`clockIn`（上班時間）、`clockOut`（下班時間）（皆為本地時間 `YYYY-MM-DD HH:mm`，不含時區）、`workMinutes`（工作時數，單位分鐘，由上下班時間計算；前端以 480 判斷「不足 8 小時」）
+- GET `/api/attendance` → 200 `{ items, total, page, perPage, lastPage }`；查詢參數（皆選填）：`search`（精靈編號或姓名模糊搜尋，≤50，`%` `_` 當一般字元）、`departmentId`（精靈所屬部門）、`dateFrom`、`dateTo`（以上班日期篩選，`YYYY-MM-DD`，含當天，迄日早於起日回 422）、`sort`（`clockIn`｜`clockOut`｜`number`｜`workMinutes`，預設 `clockIn`）、`order`（`asc`｜`desc`，預設 `desc`）、`page`、`perPage`（預設 10，1–50）；同分時依上班時間新到舊、id 排序讓分頁穩定。日期用上班時間的範圍比對（用得到索引）；工時排序在 SQL 內用 `TIMESTAMPDIFF`（測試用的 SQLite 改用 `strftime`）
+- 資料由 `AttendanceSeeder` 依執行當天往前產生：每名精靈在「昨天往前 14 天」的平日各一筆（不含今天，因為還沒下班），上下班時間用「編號 + 日期」的雜湊（crc32）決定，同一天的結果相同，約 18% 工時不足 8 小時；「可能失蹤」的精靈在最後出勤日之後沒有紀錄（距今天數：E010 7、E012 4、E015 10、E018 8）。因為日期隨執行當天移動，docker 每次啟動都會重新產生（先清空再灌入；沒有任何功能會寫入出勤紀錄，不會弄丟資料）；應用程式時區為 UTC，日期以此為準
+- 測試：tests/Feature/AttendanceTest.php
+
 ### api/statics/annual 年度統計
 - 欄位：`year`、`giftsDelivered`（份）、`growthRate`（%）、`onTimeRate`（%）、`completeRate`（%）、`feedbackRate`（%）、`note`（可為 null）
 - GET `/api/statics/annual?limit=10` 年度統計 → 200，取最新 `limit` 年（預設 10，1–50），由舊到新排序
