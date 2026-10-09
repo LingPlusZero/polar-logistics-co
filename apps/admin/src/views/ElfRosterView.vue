@@ -243,9 +243,11 @@ const confirmDelete = async () => {
             <td>{{ elf.hiredAt }}</td>
             <td>{{ formatSeniority(elf.hiredAt) }}</td>
             <td class="table__note">{{ elf.note ?? '' }}</td>
-            <td class="table__actions">
-              <button type="button" class="link" @click="openEdit(elf)">修改</button>
-              <button type="button" class="link link--danger" @click="askDelete(elf)">刪除</button>
+            <td>
+              <div class="table__actions">
+                <button type="button" class="link" @click="openEdit(elf)">修改</button>
+                <button type="button" class="link link--danger" @click="askDelete(elf)">刪除</button>
+              </div>
             </td>
           </tr>
           <tr v-if="!isLoading && elves.length === 0">

@@ -164,16 +164,18 @@ const submitClose = async () => {
             </td>
             <td class="table__note">{{ complaint.resolution ?? '' }}</td>
             <td>{{ complaint.handler ?? '' }}</td>
-            <td class="table__actions">
-              <!-- 已結案不能再更改 -->
-              <button
-                v-if="complaint.status === '處理中'"
-                type="button"
-                class="link"
-                @click="openClose(complaint)"
-              >
-                結案
-              </button>
+            <td>
+              <div class="table__actions">
+                <!-- 已結案不能再更改 -->
+                <button
+                  v-if="complaint.status === '處理中'"
+                  type="button"
+                  class="link"
+                  @click="openClose(complaint)"
+                >
+                  結案
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="!isLoading && complaints.length === 0">
