@@ -145,6 +145,13 @@ export interface ComplaintReceipt {
 }
 
 export interface ComplaintListQuery {
+  // 被申訴人的精靈編號或姓名
+  search: string
+  // 被申訴人所屬部門
+  departmentId: number | null
+  // 申訴日期（YYYY-MM-DD，起迄皆可為空）
+  dateFrom: string | null
+  dateTo: string | null
   status: ComplaintStatus | null
   page: number
   perPage: number

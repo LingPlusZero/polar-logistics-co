@@ -85,6 +85,22 @@ export const httpClient: ApiClient = {
         params.set('status', query.status)
       }
 
+      if (query.search.trim() !== '') {
+        params.set('search', query.search.trim())
+      }
+
+      if (query.departmentId !== null) {
+        params.set('departmentId', String(query.departmentId))
+      }
+
+      if (query.dateFrom) {
+        params.set('dateFrom', query.dateFrom)
+      }
+
+      if (query.dateTo) {
+        params.set('dateTo', query.dateTo)
+      }
+
       return request('GET', `/complaint?${params}`)
     },
     close: (id, resolution) => request('POST', `/complaint/${id}/close`, { resolution }),

@@ -3,6 +3,8 @@ import { ApiError, api } from '@shared/api'
 import type { Attendance, AttendanceSortKey, Department, SortOrder } from '@shared/api'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import PaginationBar from '../components/PaginationBar.vue'
+import RecordFilters from '../components/RecordFilters.vue'
+import { lastWeekRange } from '../utils/dateRange'
 
 const PER_PAGE = 10
 const SEARCH_DELAY_MS = 300
@@ -20,14 +22,11 @@ const departments = ref<Department[]>([])
 const keyword = ref('')
 const departmentFilter = ref<number | null>(null)
 
-// 日期以上班日期篩選，起迄皆可留空；預設為最近一週（含今天共 7 天）
-const toDateString = (date: Date) => date.toLocaleDateString('sv-SE')
-const today = new Date()
-const weekAgo = new Date(today)
-weekAgo.setDate(today.getDate() - 6)
+// 日期以上班日期篩選，起迄皆可留空；預設為最近一週
+const defaultRange = lastWeekRange()
+const dateFrom = ref(defaultRange.from)
+const dateTo = ref(defaultRange.to)
 
-const dateFrom = ref(toDateString(weekAgo))
-const dateTo = ref(toDateString(today))
 
 // null＝還沒點過排序：表頭都不標示，資料依預設的上班時間新到舊
 const sortKey = ref<AttendanceSortKey | null>(null)
@@ -95,11 +94,6 @@ watch([departmentFilter, dateFrom, dateTo], () => {
 
 onBeforeUnmount(() => clearTimeout(searchTimer))
 
-const clearDates = () => {
-  dateFrom.value = ''
-  dateTo.value = ''
-}
-
 // 點同一欄切換升冪／降冪；換欄時上班、下班時間先看最新的，編號與工作時數先升冪
 // （工作時數升冪＝先看工時最短的，方便找出不足 8 小時的日子）
 const toggleSort = (key: AttendanceSortKey) => {
@@ -136,47 +130,13 @@ const formatWorkTime = (minutes: number) => {
   <section>
     <h1 class="title">精靈出勤紀錄</h1>
 
-    <form class="filters" role="search" @submit.prevent>
-      <label class="filter">
-        <span class="filter__label">搜尋</span>
-        <input
-          v-model="keyword"
-          class="field__input"
-          type="search"
-          placeholder="精靈編號或姓名"
-          autocomplete="off"
-        />
-      </label>
-
-      <label class="filter">
-        <span class="filter__label">部門</span>
-        <select v-model="departmentFilter" class="field__input">
-          <option :value="null">全部部門</option>
-          <option v-for="department in departments" :key="department.id" :value="department.id">
-            {{ department.name }}
-          </option>
-        </select>
-      </label>
-
-      <label class="filter">
-        <span class="filter__label">日期（起）</span>
-        <input v-model="dateFrom" class="field__input" type="date" :max="dateTo || undefined" />
-      </label>
-
-      <label class="filter">
-        <span class="filter__label">日期（迄）</span>
-        <input v-model="dateTo" class="field__input" type="date" :min="dateFrom || undefined" />
-      </label>
-
-      <button
-        type="button"
-        class="button filters__clear"
-        :disabled="!dateFrom && !dateTo"
-        @click="clearDates"
-      >
-        清除日期
-      </button>
-    </form>
+    <RecordFilters
+      v-model:keyword="keyword"
+      v-model:department-id="departmentFilter"
+      v-model:date-from="dateFrom"
+      v-model:date-to="dateTo"
+      :departments="departments"
+    />
 
     <p class="legend">
       <span class="legend__swatch" aria-hidden="true"></span>
@@ -239,24 +199,6 @@ const formatWorkTime = (minutes: number) => {
   line-height: 1.4;
 }
 
-.filters {
-  display: grid;
-  gap: 0.75rem 1rem;
-  align-items: end;
-  margin-top: 1.25rem;
-}
-
-.filter__label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.filters__clear {
-  justify-self: start;
-  padding: 0.625rem 1.25rem;
-}
-
 .legend {
   display: flex;
   align-items: center;
@@ -277,9 +219,4 @@ const formatWorkTime = (minutes: number) => {
   background: #fff6d0;
 }
 
-@media (min-width: 48em) {
-  .filters {
-    grid-template-columns: repeat(4, 12rem) auto;
-  }
-}
 </style>

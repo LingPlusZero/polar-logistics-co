@@ -47,7 +47,15 @@ const withLastAttended = (elf: StoredElf): Elf => {
 // 名冊存的欄位不含最後出勤日（它由出勤紀錄算出，輸出時才帶上）
 type StoredElf = Omit<Elf, 'lastAttendedAt'>
 const rosterStore = createStore<StoredElf>('demo:roster', rosterData as StoredElf[])
-const complaintStore = createStore<Complaint>('demo:complaint', complaintData as Complaint[])
+// 預設申訴紀錄的日期以「距今幾天前」存，載入時換算成日期，預設的最近一週才有資料
+type ComplaintSeed = Omit<Complaint, 'filedAt'> & { daysAgo: number }
+
+const complaintSeed: Complaint[] = (complaintData as ComplaintSeed[]).map(({ daysAgo, ...rest }) => {
+  const date = new Date()
+  date.setDate(date.getDate() - daysAgo)
+  return { ...rest, filedAt: date.toLocaleDateString('sv-SE') }
+})
+const complaintStore = createStore<Complaint>('demo:complaint', complaintSeed)
 
 const PASSWORD_KEY_PREFIX = 'demo:password:'
 
@@ -186,11 +194,28 @@ export const demoClient: ApiClient = {
     },
   },
   complaint: {
-    // 新的在前（申訴日期，同日以 id），與後端一致；分頁、篩選在這裡模擬
+    // 新的在前（申訴日期，同日以 id），與後端一致；搜尋、篩選、分頁在這裡模擬
     async list(query) {
+      if (query.dateFrom && query.dateTo && query.dateTo < query.dateFrom) {
+        throw new ApiError(422, '結束日期不可早於開始日期', { dateTo: ['結束日期不可早於開始日期'] })
+      }
+
+      const text = query.search.trim().toLowerCase()
+      // 申訴紀錄不帶部門，篩選時用被申訴人的精靈編號對照
+      const departmentIdOf = (number: string) => elves.find((elf) => elf.number === number)?.departmentId
+
       const filtered = complaintStore
         .read()
-        .filter((item) => query.status === null || item.status === query.status)
+        .filter(
+          (item) =>
+            (query.status === null || item.status === query.status) &&
+            (!query.dateFrom || item.filedAt >= query.dateFrom) &&
+            (!query.dateTo || item.filedAt <= query.dateTo) &&
+            (query.departmentId === null || departmentIdOf(item.elfNumber) === query.departmentId) &&
+            (text === '' ||
+              item.elfNumber.toLowerCase().includes(text) ||
+              item.elfName.toLowerCase().includes(text)),
+        )
         .sort((a, b) => b.filedAt.localeCompare(a.filedAt) || b.id - a.id)
 
       return {

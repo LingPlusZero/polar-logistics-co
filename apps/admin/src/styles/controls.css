@@ -192,3 +192,10 @@
 .sort:hover {
   text-decoration: underline;
 }
+
+/* 篩選列的欄位標題（slot 內容也要套用，所以放全域） */
+.filter__label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}

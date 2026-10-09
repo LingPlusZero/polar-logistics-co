@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ApiError, api } from '@shared/api'
-import type { Complaint, ComplaintStatus } from '@shared/api'
-import { onMounted, ref, watch } from 'vue'
+import type { Complaint, ComplaintStatus, Department } from '@shared/api'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ModalDialog from '../components/ModalDialog.vue'
 import PaginationBar from '../components/PaginationBar.vue'
+import RecordFilters from '../components/RecordFilters.vue'
 import { useAuth } from '../composables/useAuth'
+import { lastWeekRange } from '../utils/dateRange'
 
 const PER_PAGE = 10
+const SEARCH_DELAY_MS = 300
 
 const { profile } = useAuth()
 
@@ -15,6 +18,17 @@ const total = ref(0)
 const lastPage = ref(1)
 const page = ref(1)
 const statusFilter = ref<ComplaintStatus | null>(null)
+
+const departments = ref<Department[]>([])
+// 搜尋與部門針對被申訴人
+const keyword = ref('')
+const departmentFilter = ref<number | null>(null)
+
+// 日期以申訴日期篩選，起迄皆可留空；預設為最近一週
+const defaultRange = lastWeekRange()
+const dateFrom = ref(defaultRange.from)
+const dateTo = ref(defaultRange.to)
+
 const isLoading = ref(true)
 const loadError = ref('')
 const notice = ref('')
@@ -29,6 +43,10 @@ const load = async () => {
 
   try {
     const result = await api.complaint.list({
+      search: keyword.value,
+      departmentId: departmentFilter.value,
+      dateFrom: dateFrom.value || null,
+      dateTo: dateTo.value || null,
       status: statusFilter.value,
       page: page.value,
       perPage: PER_PAGE,
@@ -59,12 +77,28 @@ const load = async () => {
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  departments.value = await api.department.list().catch(() => [])
+  await load()
+})
 
-watch(statusFilter, () => {
+// 篩選改變就回到第一頁；搜尋文字等使用者停手再送出
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+watch(keyword, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    page.value = 1
+    load()
+  }, SEARCH_DELAY_MS)
+})
+
+watch([statusFilter, departmentFilter, dateFrom, dateTo], () => {
   page.value = 1
   load()
 })
+
+onBeforeUnmount(() => clearTimeout(searchTimer))
 
 const goToPage = (target: number) => {
   page.value = target
@@ -122,7 +156,14 @@ const submitClose = async () => {
   <section>
     <h1 class="title">精靈被申訴紀錄</h1>
 
-    <form class="filters" role="search" @submit.prevent>
+    <RecordFilters
+      v-model:keyword="keyword"
+      v-model:department-id="departmentFilter"
+      v-model:date-from="dateFrom"
+      v-model:date-to="dateTo"
+      :departments="departments"
+      search-label="被申訴人的精靈編號或姓名"
+    >
       <label class="filter">
         <span class="filter__label">狀態</span>
         <select v-model="statusFilter" class="field__input">
@@ -131,7 +172,7 @@ const submitClose = async () => {
           <option value="已結案">已結案</option>
         </select>
       </label>
-    </form>
+    </RecordFilters>
 
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
     <p v-if="loadError" class="field__error" role="alert">{{ loadError }}</p>
@@ -231,19 +272,6 @@ const submitClose = async () => {
 .title {
   font-size: 1.5rem;
   line-height: 1.4;
-}
-
-.filters {
-  display: grid;
-  gap: 0.75rem 1rem;
-  margin-top: 1.25rem;
-  max-width: 16rem;
-}
-
-.filter__label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.875rem;
 }
 
 /* 申訴事由是主要內容，不用淡化成備註色 */
