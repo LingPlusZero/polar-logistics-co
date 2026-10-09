@@ -42,16 +42,13 @@ onMounted(async () => {
               <li v-for="line in toLines(career.requirements)" :key="line">{{ line }}</li>
             </ul>
 
+            <!-- 福利包含轉正機會；只有一項時維持單行文字，多行時顯示成清單 -->
             <template v-if="career.benefits">
               <h3 class="jobs__label">福利</h3>
-              <p>{{ career.benefits }}</p>
-            </template>
-
-            <template v-if="career.promotion">
-              <h3 class="jobs__label">轉正機會</h3>
-              <ul class="jobs__list">
-                <li v-for="line in toLines(career.promotion)" :key="line">{{ line }}</li>
+              <ul v-if="toLines(career.benefits).length > 1" class="jobs__list">
+                <li v-for="line in toLines(career.benefits)" :key="line">{{ line }}</li>
               </ul>
+              <p v-else>{{ career.benefits }}</p>
             </template>
 
             <template v-if="career.note">
