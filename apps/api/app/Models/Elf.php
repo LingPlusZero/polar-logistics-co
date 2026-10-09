@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ElfRank;
 use App\Enums\ElfStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -56,6 +57,30 @@ class Elf extends Model
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    // 列表一次查出「今天是否在假期內」（on_leave），避免每列多一次查詢
+    public function scopeWithOnLeave(Builder $query): void
+    {
+        $query->withExists(['leaveRequests as on_leave' => fn ($q) => $q->approvedOn(now()->toDateString())]);
+    }
+
+    // 顯示用狀態：「請假」由請假單決定（核准且今天在假期內），「可能失蹤」優先；
+    // 沒有用 scopeWithOnLeave 查出時，這裡再查一次
+    public function displayStatus(): ElfStatus
+    {
+        if ($this->status === ElfStatus::MaybeMissing) {
+            return $this->status;
+        }
+
+        $onLeave = $this->on_leave ?? $this->leaveRequests()->approvedOn(now()->toDateString())->exists();
+
+        return $onLeave ? ElfStatus::OnLeave : $this->status;
     }
 
     public function hasPermission(string $permission): bool

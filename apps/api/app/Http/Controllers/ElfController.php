@@ -14,7 +14,7 @@ class ElfController extends Controller
 {
     public function index(ElfListRequest $request)
     {
-        $query = Elf::with('department')->withMax('attendances', 'clock_in');
+        $query = Elf::with('department')->withOnLeave()->withMax('attendances', 'clock_in');
 
         if ($search = $request->validated('search')) {
             // 搜尋字串中的 % _ 要跳脫，避免使用者輸入變成萬用字元

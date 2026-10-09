@@ -7,6 +7,7 @@ use App\Http\Controllers\CareerController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\ElfController;
+use App\Http\Controllers\LeaveController;
 use App\Http\Middleware\AuthenticateElf;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\RequireSecureConnection;
@@ -42,6 +43,23 @@ Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->gro
         Route::post('/complaint/{complaint}/close', [ComplaintController::class, 'close']);
     });
 });
+
+// 請假：申請與查看自己的假單所有人都可以（申請限流）；審核需部長以上，且只能審核範圍內的假單
+Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->group(function () {
+    Route::middleware(RequirePermission::class.':leave.apply')->group(function () {
+        Route::get('/leave/mine', [LeaveController::class, 'mine']);
+        Route::post('/leave', [LeaveController::class, 'store'])->middleware('throttle:10,1');
+    });
+    Route::middleware(RequirePermission::class.':leave.review')->group(function () {
+        Route::get('/leave/review', [LeaveController::class, 'review']);
+        Route::post('/leave/{leave}/approve', [LeaveController::class, 'approve']);
+        Route::post('/leave/{leave}/reject', [LeaveController::class, 'reject']);
+    });
+});
+
+// 精靈請假紀錄：全部精靈的假單，需人力資源部權限
+Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, RequirePermission::class.':elf.leave'])
+    ->get('/leave/records', [LeaveController::class, 'records']);
 
 // 精靈出勤紀錄：只有列表，需人力資源部權限
 Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, RequirePermission::class.':elf.attendance'])

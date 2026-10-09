@@ -39,7 +39,7 @@ class ElfRequest extends FormRequest
 
     private function isOnLeave(): bool
     {
-        return $this->route('elf')?->status === ElfStatus::OnLeave;
+        return $this->route('elf')?->displayStatus() === ElfStatus::OnLeave;
     }
 
     // 對外欄位是 camelCase，轉成資料表欄位

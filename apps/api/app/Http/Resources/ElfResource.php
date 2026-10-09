@@ -19,7 +19,7 @@ class ElfResource extends JsonResource
             'department' => $this->department->name,
             'rank' => $this->rank->value,
             'hiredAt' => $this->hired_at->toDateString(),
-            'status' => $this->status->value,
+            'status' => $this->displayStatus()->value,
             'note' => $this->note,
             // 最後一次出勤的日期，由出勤紀錄算出（withMax／loadMax 帶入）；沒有紀錄為 null
             'lastAttendedAt' => $this->attendances_max_clock_in

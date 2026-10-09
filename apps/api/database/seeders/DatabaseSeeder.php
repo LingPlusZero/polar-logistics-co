@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             // 申訴紀錄依賴精靈
             ComplaintSeeder::class,
             AttendanceSeeder::class,
+            // 假單依賴精靈
+            LeaveRequestSeeder::class,
         ]);
     }
 }
