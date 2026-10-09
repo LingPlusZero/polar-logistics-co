@@ -55,10 +55,10 @@
 - 全部端點需帶 `Authorization: Bearer <token>`；未登入回 401，沒有權限回 403
 - 欄位（紀錄）：`id`、`elfNumber`／`elfName`（被申訴人的編號與姓名）、`filedAt`（申訴日期 `YYYY-MM-DD`）、`reason`（申訴事由，≤500）、`status`（處理中／已結案）、`resolution`（後續處理，結案時必填，≤2000，未結案為 null）、`handler`（處理人姓名，結案者，未結案為 null）；申訴人（`complainant_id`）只存不回傳
 - POST `/api/complaint` 我要申訴（`complaint.file`，所有人；每 IP 每分鐘 10 次）→ 201 `{ id, elfNumber, elfName }`；body `{ elfNumber, reason }`，`elfNumber` 是被申訴人編號；申訴日期取當天、狀態預設處理中、申訴人為登入者；編號不存在或申訴自己回 422（`errors.elfNumber`）。因申訴人不一定能看紀錄，只回確認用的最少資訊
-- GET `/api/complaint` 紀錄清單（`elf.complaint`，人力資源部）→ 200 `{ items, total, page, perPage, lastPage }`；查詢參數 `status`（處理中｜已結案）、`page`、`perPage`（預設 10，1–50）；固定依申訴日期新到舊，同日依 id
+- GET `/api/complaint` 紀錄清單（`elf.complaint`，人力資源部）→ 200 `{ items, total, page, perPage, lastPage }`；查詢參數（皆選填）：`search`（被申訴人的精靈編號或姓名模糊搜尋，≤50，`%` `_` 當一般字元）、`departmentId`（被申訴人所屬部門）、`dateFrom`、`dateTo`（以申訴日期篩選，`YYYY-MM-DD`，含當天，迄日早於起日回 422）、`status`（處理中｜已結案）、`page`、`perPage`（預設 10，1–50）；固定依申訴日期新到舊，同日依 id
 - POST `/api/complaint/{id}/close` 結案（`elf.complaint`）→ 200，回傳該筆；body `{ resolution }`（必填）；處理人由登入者自動帶入；已結案再結案回 409；已結案不能更改，也沒有修改、刪除端點
 - 資料表 `complaint`：被申訴人刪除時紀錄一併刪除，申訴人、處理人刪除時保留紀錄、欄位設為空
-- 資料由 `ComplaintSeeder` 建立（表內已有資料就不灌入）：E016 夜櫻與 E017 晨露一直用小事投訴對方，共 8 筆，4 筆已結案、4 筆處理中
+- 資料由 `ComplaintSeeder` 建立（表內已有資料就不灌入，因為紀錄可能已被結案，不能重新產生）：E016 夜櫻與 E017 晨露一直用小事投訴對方，共 8 筆，4 筆已結案、4 筆處理中；申訴日期以「距第一次執行當天幾天前」設定（87、86、67、49 天前已結案；12、5、3、1 天前處理中），讓預設的最近一週有 3 筆。已灌過的資料庫日期不會再變，需要時可清空 `complaint` 表重灌
 - 測試：tests/Feature/ComplaintTest.php
 
 ### api/attendance 精靈出勤紀錄

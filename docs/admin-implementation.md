@@ -43,11 +43,11 @@
 - 磨砂玻璃倒數方塊（數字每次更新有進場動畫）+ 依權限產生的「常用功能」捷徑
 
 ## 精靈被申訴紀錄與我要申訴
-- 紀錄頁 `views/ComplaintRecordsView.vue`（`elf.complaint`）：狀態篩選 + 後端分頁（每頁 10 筆，新的在前）；只有「處理中」顯示「結案」按鈕，已結案不能更改（API 也不提供修改與刪除）
+- 紀錄頁 `views/ComplaintRecordsView.vue`（`elf.complaint`）：搜尋（被申訴人編號/姓名，300ms debounce）、部門篩選（被申訴人所屬部門）、日期篩選（申訴日期，預設最近一週）、狀態篩選 + 後端分頁（每頁 10 筆，新的在前）；搜尋、部門、日期這組篩選列與出勤紀錄共用 `components/RecordFilters.vue`，狀態下拉由 slot 放進去，預設日期由 `utils/dateRange.ts` 的 `lastWeekRange()` 提供；只有「處理中」顯示「結案」按鈕，已結案不能更改（API 也不提供修改與刪除）
 - 結案視窗（`ModalDialog`）：後續處理說明必填，處理人只顯示由系統帶入的登入者姓名，不讓使用者填；遇到 409（已被別人結案）會重新載入清單
 - 我要申訴頁 `views/ComplaintFileView.vue`（`complaint.file`，所有人）：只填被申訴人編號與事由；送出後用 API 回傳的姓名顯示「已送出對 ○○（編號）的申訴」，讓申訴人確認沒輸錯
 - 分頁元件抽成 `components/PaginationBar.vue`（名冊、申訴紀錄共用）；表格、提示、文字連結等清單頁共用樣式放在 `src/styles/controls.css`
-- Demo：`demoClient.complaint` 在前端模擬；資料 `shared/api/demo/data/complaint.json`（由 `ComplaintSeeder` 匯出）存 sessionStorage（`demo:complaint`），ComplaintSeeder 變動後需重新匯出；`elf.json` 的權限已加上 `complaint.file`
+- Demo：`demoClient.complaint` 在前端模擬搜尋、篩選與分頁；資料 `shared/api/demo/data/complaint.json`（由 `ComplaintSeeder` 匯出）以 `daysAgo`（距今幾天前）存日期，載入時換算成實際日期，所以預設最近一週永遠有資料；寫入存 sessionStorage（`demo:complaint`），ComplaintSeeder 變動後需重新匯出；`elf.json` 的權限已加上 `complaint.file`
 
 ## 閒置自動登出
 - 後端為準：權杖閒置 30 分鐘即失效（`AuthenticateElf`，見 `docs/api.md`），前端另有計時器讓畫面即時反應，兩邊的 30 分鐘要同步（`Elf::IDLE_TIMEOUT_MINUTES`、`useIdleLogout.ts` 的 `IDLE_TIMEOUT_MS`）
@@ -59,6 +59,6 @@
 - Demo 模式沒有後端，只有前端計時器作用
 
 ## 精靈出勤紀錄
-- 頁面 `views/AttendanceView.vue`（`elf.attendance`）：唯讀列表 + 後端分頁（每頁 10 筆）；搜尋（精靈編號/姓名，300ms debounce）與部門篩選（做法同精靈名冊）；日期篩選（預設最近一週：今天往前 6 天到今天，用瀏覽器本地日期；起、迄皆可留空，「清除日期」會看到全部；改變就回第 1 頁，迄日 `min` 限制為起日。預設只是前端帶的查詢條件，API 本身沒有預設日期範圍）；排序用表頭按鈕（精靈編號、上班時間、下班時間、工作時數，四欄樣式一致；一開始都未標示排序，資料依預設的上班時間新到舊，點上班時間即回到此順序並標示），點同一欄切換升降冪，換欄時上班、下班時間先新到舊，編號與工作時數先升冪（工時短的在前，方便找出不足 8 小時的日子）
+- 頁面 `views/AttendanceView.vue`（`elf.attendance`）：唯讀列表 + 後端分頁（每頁 10 筆）；搜尋（精靈編號/姓名，300ms debounce）、部門與日期篩選用共用的 `components/RecordFilters.vue`（預設最近一週：今天往前 6 天到今天，用瀏覽器本地日期，見 `utils/dateRange.ts`；起、迄皆可留空，「清除日期」會看到全部；改變就回第 1 頁，迄日 `min` 限制為起日。預設只是前端帶的查詢條件，API 本身沒有預設日期範圍）；排序用表頭按鈕（精靈編號、上班時間、下班時間、工作時數，四欄樣式一致；一開始都未標示排序，資料依預設的上班時間新到舊，點上班時間即回到此順序並標示），點同一欄切換升降冪，換欄時上班、下班時間先新到舊，編號與工作時數先升冪（工時短的在前，方便找出不足 8 小時的日子）
 - 工作時數不足 8 小時（`workMinutes < 480`）的整列背景 `#fff6d0`；表格上方放圖例說明底色意義，避免只靠顏色傳達
 - Demo：不存快照，`shared/api/demo/attendance.ts` 的 `generateAttendance` 依「今天」往前產生（同一個分頁只算一次，唯讀）；規則與 `AttendanceSeeder` 完全一致（含與 PHP 相同的 crc32 雜湊、時間範圍與失蹤精靈的最後出勤日），改一邊要改另一邊，所以 Demo 與真實資料在同一天看到的內容相同，GitHub Pages 上也不會過期
