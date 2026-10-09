@@ -74,7 +74,12 @@ export const MENU: (MenuItem | MenuGroup)[] = [
     permission: 'reindeer.manage',
     component: () => import('../views/ReindeerView.vue'),
   },
-  { label: '職缺管理', path: '/career', permission: 'career.manage' },
+  {
+    label: '職缺管理',
+    path: '/career',
+    permission: 'career.manage',
+    component: () => import('../views/CareerManageView.vue'),
+  },
 ]
 
 export const isGroup = (item: MenuItem | MenuGroup): item is MenuGroup => 'children' in item

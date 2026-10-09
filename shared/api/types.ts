@@ -15,7 +15,6 @@ export interface Career {
   description: string
   requirements: string
   benefits: string | null
-  promotion: string | null
   note: string | null
 }
 

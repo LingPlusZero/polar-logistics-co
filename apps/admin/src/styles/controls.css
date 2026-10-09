@@ -214,3 +214,12 @@
   margin-bottom: 0.25rem;
   font-size: 0.875rem;
 }
+
+/* 所有會捲動的區域（頁面、表格、視窗、文字框）都隱藏捲軸，仍可用滾輪、觸控或鍵盤捲動 */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
