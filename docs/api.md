@@ -40,7 +40,7 @@
 
 ### api/elf 精靈名冊
 - 全部端點需帶 `Authorization: Bearer <token>` 且有 `elf.roster`（人力資源部）；未登入回 401，沒有權限回 403
-- 欄位：`id`、`number`（精靈編號，`E` + 至少 3 位數字，唯一，新增時由系統自動產生）、`name`（≤50）、`departmentId`（必填，須為既有部門）、`department`（唯讀，部門名稱）、`rank`（職稱：實習精靈／正式精靈／資深精靈／部長／副聖誕老人）、`hiredAt`（到職日 `YYYY-MM-DD`，不可晚於今天）、`status`（正常／請假／可能失蹤）、`note`（選填，≤2000）；不回傳密碼與權杖，年資不回傳（由 `hiredAt` 計算）
+- 欄位：`id`、`number`（精靈編號，`E` + 至少 3 位數字，唯一，新增時由系統自動產生）、`name`（≤50）、`departmentId`（必填，須為既有部門）、`department`（唯讀，部門名稱）、`rank`（職稱：實習精靈／正式精靈／資深精靈／部長／副聖誕老人）、`hiredAt`（到職日 `YYYY-MM-DD`，不可晚於今天）、`status`（正常／請假／可能失蹤）、`note`（選填，≤500）；不回傳密碼與權杖，年資不回傳（由 `hiredAt` 計算）
 - 不可修改欄位：`number`、`hiredAt`（年資由它而來）。`number` 新增與修改都不接受（送來也忽略），新增時取 E 開頭編號的最大數字 + 1（`Elf::nextNumber()`，至少 3 位數，在交易內計算）；`hiredAt` 只在 POST 驗證，PUT 即使帶了也忽略
 - `status` 的「請假」是有請假申請且正值假期才會顯示，不能手動設定：新增與修改只接受「正常」「可能失蹤」，傳「請假」回 422；目前為請假狀態的精靈修改時不驗證也不更動 `status`。請假單功能完成後，由請假單算出（目前尚未實作）
 - GET `/api/elf` 名冊（搜尋、篩選、排序、分頁都在後端）→ 200 `{ items, total, page, perPage, lastPage }`（不包 `data`）；`page` 超出範圍時以資料庫分頁行為回傳該頁（可能為空）
@@ -50,6 +50,16 @@
 - PUT `/api/elf/{id}` 修改 → 200，回傳該筆（需帶 `name`、`departmentId`、`rank`、`status`，`note` 選填）
 - DELETE `/api/elf/{id}` 刪除 → 204；刪除自己回 422 `{"message":"不能刪除自己"}`
 - 測試：tests/Feature/ElfTest.php
+
+### api/complaint 精靈被申訴紀錄／我要申訴
+- 全部端點需帶 `Authorization: Bearer <token>`；未登入回 401，沒有權限回 403
+- 欄位（紀錄）：`id`、`elfNumber`／`elfName`（被申訴人的編號與姓名）、`filedAt`（申訴日期 `YYYY-MM-DD`）、`reason`（申訴事由，≤500）、`status`（處理中／已結案）、`resolution`（後續處理，結案時必填，≤2000，未結案為 null）、`handler`（處理人姓名，結案者，未結案為 null）；申訴人（`complainant_id`）只存不回傳
+- POST `/api/complaint` 我要申訴（`complaint.file`，所有人；每 IP 每分鐘 10 次）→ 201 `{ id, elfNumber, elfName }`；body `{ elfNumber, reason }`，`elfNumber` 是被申訴人編號；申訴日期取當天、狀態預設處理中、申訴人為登入者；編號不存在或申訴自己回 422（`errors.elfNumber`）。因申訴人不一定能看紀錄，只回確認用的最少資訊
+- GET `/api/complaint` 紀錄清單（`elf.complaint`，人力資源部）→ 200 `{ items, total, page, perPage, lastPage }`；查詢參數 `status`（處理中｜已結案）、`page`、`perPage`（預設 10，1–50）；固定依申訴日期新到舊，同日依 id
+- POST `/api/complaint/{id}/close` 結案（`elf.complaint`）→ 200，回傳該筆；body `{ resolution }`（必填）；處理人由登入者自動帶入；已結案再結案回 409；已結案不能更改，也沒有修改、刪除端點
+- 資料表 `complaint`：被申訴人刪除時紀錄一併刪除，申訴人、處理人刪除時保留紀錄、欄位設為空
+- 資料由 `ComplaintSeeder` 建立（表內已有資料就不灌入）：E016 夜櫻與 E017 晨露一直用小事投訴對方，共 8 筆，4 筆已結案、4 筆處理中
+- 測試：tests/Feature/ComplaintTest.php
 
 ### api/statics/annual 年度統計
 - 欄位：`year`、`giftsDelivered`（份）、`growthRate`（%）、`onTimeRate`（%）、`completeRate`（%）、`feedbackRate`（%）、`note`（可為 null）
@@ -69,7 +79,7 @@
   - 新密碼規則：至少 12 字元（≤72），且各一個大寫、小寫、數字、特殊符號，不可與舊密碼相同，兩次輸入需一致
   - 修改後該精靈所有權杖立即失效（包含目前這一組），需用新密碼重新登入
 - 權限（`permissions`，由 `Elf::permissions()` 依職級與部門計算，前端選單依此顯示）：
-  - 所有人：`leave.apply`、`password.change`
+  - 所有人：`leave.apply`、`password.change`、`complaint.file`（我要申訴）
   - 部長、副聖誕老人：`leave.review`
   - 人力資源部：`elf.roster`、`elf.leave`、`elf.complaint`、`elf.attendance`、`career.manage`、`reindeer.manage`
   - 馴鹿管理部：`reindeer.manage`

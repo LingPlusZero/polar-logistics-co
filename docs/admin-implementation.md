@@ -40,3 +40,10 @@
 - 倒數：共用 `shared/composables/useDeadlineCountdown.ts`（官網數據列也使用），期限為 12/25 零點
 - 深藍漸層 hero + `SnowBackdrop.vue`（canvas 雪花與右下角的小聖誕樹〔單色線條、紅色星星，吊飾緩慢閃爍，畫面寬度 <320px 不畫〕，依面積決定數量、以時間差推進、分頁隱藏時暫停、`prefers-reduced-motion` 時只畫靜態畫面）
 - 磨砂玻璃倒數方塊（數字每次更新有進場動畫）+ 依權限產生的「常用功能」捷徑
+
+## 精靈被申訴紀錄與我要申訴
+- 紀錄頁 `views/ComplaintRecordsView.vue`（`elf.complaint`）：狀態篩選 + 後端分頁（每頁 10 筆，新的在前）；只有「處理中」顯示「結案」按鈕，已結案不能更改（API 也不提供修改與刪除）
+- 結案視窗（`ModalDialog`）：後續處理說明必填，處理人只顯示由系統帶入的登入者姓名，不讓使用者填；遇到 409（已被別人結案）會重新載入清單
+- 我要申訴頁 `views/ComplaintFileView.vue`（`complaint.file`，所有人）：只填被申訴人編號與事由；送出後用 API 回傳的姓名顯示「已送出對 ○○（編號）的申訴」，讓申訴人確認沒輸錯
+- 分頁元件抽成 `components/PaginationBar.vue`（名冊、申訴紀錄共用）；表格、提示、文字連結等清單頁共用樣式放在 `src/styles/controls.css`
+- Demo：`demoClient.complaint` 在前端模擬；資料 `shared/api/demo/data/complaint.json`（由 `ComplaintSeeder` 匯出）存 sessionStorage（`demo:complaint`），ComplaintSeeder 變動後需重新匯出；`elf.json` 的權限已加上 `complaint.file`
