@@ -2,8 +2,8 @@
 // 員工專區連到精靈管理系統，網址依環境設定（見 .env）
 const adminUrl = import.meta.env.VITE_ADMIN_URL
 
-// 精靈管理系統尚未完成，先停用連結；完成後改成 true 即可開啟
-const IS_ADMIN_ENABLED = false
+// 精靈管理系統已完成並隨 GitHub Pages 一起部署（/admin/），開啟連結；需要停用時改成 false
+const IS_ADMIN_ENABLED = true
 </script>
 
 <template>

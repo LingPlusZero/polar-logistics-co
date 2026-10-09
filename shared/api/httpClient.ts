@@ -17,7 +17,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   })
 
   if (!response.ok) {
-    // 優先使用後端的錯誤訊息（驗證失敗、查無帳號等）
+    // 優先使用後端的錯誤訊息（驗證失敗、查無帳號等）；5xx 或沒有訊息時只顯示通用文字，
+    // 不把狀態碼、請求路徑等內部細節顯示給使用者
     const payload = await response.json().catch(() => null)
 
     // 帶著權杖卻被拒絕＝登入已失效（登入端點的 401 是帳密錯誤，不算）
@@ -27,7 +28,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
     throw new ApiError(
       response.status,
-      payload?.message ?? `API ${method} ${path} 失敗：${response.status}`,
+      response.status >= 500 ? '伺服器發生錯誤，請稍後再試' : (payload?.message ?? '操作失敗，請稍後再試'),
       payload?.errors,
       payload?.reason,
     )
