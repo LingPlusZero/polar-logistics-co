@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ElfRank;
 use App\Enums\LeaveStatus;
 use App\Enums\LeaveType;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ class LeaveRequest extends Model
     protected $table = 'leave_request';
 
     protected $fillable = [
-        'elf_id', 'leave_type', 'start_date', 'end_date', 'applied_at',
+        'elf_id', 'reindeer_id', 'leave_type', 'start_date', 'end_date', 'applied_at',
         'status', 'reviewed_at', 'reviewer_id', 'reject_reason',
     ];
 
@@ -35,6 +36,12 @@ class LeaveRequest extends Model
         return $this->belongsTo(Elf::class);
     }
 
+    // 代請假的馴鹿；null＝精靈替自己請假
+    public function reindeer(): BelongsTo
+    {
+        return $this->belongsTo(Reindeer::class);
+    }
+
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(Elf::class, 'reviewer_id');
@@ -43,7 +50,8 @@ class LeaveRequest extends Model
     // 與 $start～$end（含）有重疊的假單
     public function scopeOverlapping(Builder $query, string $start, string $end): void
     {
-        $query->where('start_date', '<=', $end)->where('end_date', '>=', $start);
+        // 起日用「小於迄日隔天」比對：經 model 寫入的日期在部分資料庫（SQLite）會帶時間，直接比 <= 日期字串會漏掉當天
+        $query->where('start_date', '<', CarbonImmutable::parse($end)->addDay()->toDateString())->where('end_date', '>=', $start);
     }
 
     // 駁回的假單不佔用日期，其餘（審核中、核准）都算
@@ -56,7 +64,7 @@ class LeaveRequest extends Model
     public function scopeApprovedOn(Builder $query, string $date): void
     {
         $query->where('status', LeaveStatus::Approved->value)
-            ->where('start_date', '<=', $date)
+            ->where('start_date', '<', CarbonImmutable::parse($date)->addDay()->toDateString())
             ->where('end_date', '>=', $date);
     }
 

@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             AttendanceSeeder::class,
             // 假單依賴精靈
             LeaveRequestSeeder::class,
+            // 動力單位依賴精靈（照護專員），也會建立馴鹿代請的假單
+            ReindeerSeeder::class,
         ]);
     }
 }

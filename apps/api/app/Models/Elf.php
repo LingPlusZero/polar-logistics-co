@@ -67,7 +67,7 @@ class Elf extends Model
     // 列表一次查出「今天是否在假期內」（on_leave），避免每列多一次查詢
     public function scopeWithOnLeave(Builder $query): void
     {
-        $query->withExists(['leaveRequests as on_leave' => fn ($q) => $q->approvedOn(now()->toDateString())]);
+        $query->withExists(['leaveRequests as on_leave' => fn ($q) => $q->whereNull('reindeer_id')->approvedOn(now()->toDateString())]);
     }
 
     // 顯示用狀態：「請假」由請假單決定（核准且今天在假期內），「可能失蹤」優先；
@@ -78,7 +78,7 @@ class Elf extends Model
             return $this->status;
         }
 
-        $onLeave = $this->on_leave ?? $this->leaveRequests()->approvedOn(now()->toDateString())->exists();
+        $onLeave = $this->on_leave ?? $this->leaveRequests()->whereNull('reindeer_id')->approvedOn(now()->toDateString())->exists();
 
         return $onLeave ? ElfStatus::OnLeave : $this->status;
     }

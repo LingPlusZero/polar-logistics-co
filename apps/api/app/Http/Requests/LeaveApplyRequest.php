@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\LeaveType;
 use App\Models\LeaveRequest;
+use App\Models\Reindeer;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,6 +26,8 @@ class LeaveApplyRequest extends FormRequest
         return [
             'leaveType' => ['required', Rule::enum(LeaveType::class)],
             'startDate' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
+            // 照護專員代馴鹿請假時帶馴鹿 id；省略代表替自己請假
+            'reindeerId' => ['nullable', 'integer'],
         ];
     }
 
@@ -50,6 +53,15 @@ class LeaveApplyRequest extends FormRequest
                     return;
                 }
 
+                // 只有該馴鹿的照護專員能代請（不存在的馴鹿與別人的馴鹿同樣回覆，不透露馴鹿是否存在）
+                $reindeerId = $this->validated('reindeerId');
+
+                if ($reindeerId !== null && ! Reindeer::where('id', $reindeerId)->where('caretaker_id', $this->user()->id)->exists()) {
+                    $validator->errors()->add('reindeerId', '只有照護專員能代馴鹿請假');
+
+                    return;
+                }
+
                 [$start, $end] = $this->period();
 
                 // 請假期間只要有一天落在 12 月就不行（例如 11/28 起請 7 天）
@@ -61,8 +73,9 @@ class LeaveApplyRequest extends FormRequest
                     }
                 }
 
-                // 每個假不能重疊；被駁回的假單不佔用日期
+                // 每個假不能重疊；被駁回的假單不佔用日期。精靈自己與每隻馴鹿的假單分開計算
                 $overlapping = LeaveRequest::where('elf_id', $this->user()->id)
+                    ->where('reindeer_id', $reindeerId)
                     ->notRejected()
                     ->overlapping($start->toDateString(), $end->toDateString())
                     ->exists();

@@ -14,6 +14,9 @@ class LeaveResource extends JsonResource
             'id' => $this->id,
             'elfNumber' => $this->elf->number,
             'elfName' => $this->elf->name,
+            // 照護專員代馴鹿請假時為該馴鹿，替自己請假為 null
+            'reindeerNumber' => $this->reindeer?->number,
+            'reindeerName' => $this->reindeer?->name,
             'leaveType' => $this->leave_type->value,
             'days' => $this->leave_type->days(),
             'startDate' => $this->start_date->toDateString(),

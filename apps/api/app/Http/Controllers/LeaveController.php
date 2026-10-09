@@ -31,7 +31,8 @@ class LeaveController extends Controller
     // 人力資源部看全部精靈的請假紀錄；搜尋與部門針對申請人
     public function records(LeaveRecordListRequest $request)
     {
-        $query = LeaveRequest::query();
+        // 馴鹿的假單（照護專員代請）不是精靈自己的請假，不列入精靈請假紀錄
+        $query = LeaveRequest::whereNull('reindeer_id');
 
         $search = $request->validated('search');
         $departmentId = $request->validated('departmentId');
@@ -60,6 +61,7 @@ class LeaveController extends Controller
 
         $leave = LeaveRequest::create([
             'elf_id' => $elf->id,
+            'reindeer_id' => $request->validated('reindeerId'),
             'leave_type' => $request->validated('leaveType'),
             'start_date' => $start,
             'end_date' => $end,
@@ -67,7 +69,7 @@ class LeaveController extends Controller
             'status' => LeaveStatus::Pending,
         ]);
 
-        return (new LeaveResource($leave->load(['elf', 'reviewer'])))->response()->setStatusCode(Response::HTTP_CREATED);
+        return (new LeaveResource($leave->load(['elf', 'reindeer', 'reviewer'])))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 
     public function approve(Request $request, LeaveRequest $leave)
@@ -104,7 +106,7 @@ class LeaveController extends Controller
             return response()->json(['message' => '這張假單已經審核過'], Response::HTTP_CONFLICT);
         }
 
-        return new LeaveResource($leave->refresh()->load(['elf', 'reviewer']));
+        return new LeaveResource($leave->refresh()->load(['elf', 'reindeer', 'reviewer']));
     }
 
     private function paginated(Builder $query, LeaveListRequest $request)
@@ -123,7 +125,7 @@ class LeaveController extends Controller
         }
 
         // 申請日新到舊；同一天以 id 排序讓分頁順序穩定
-        $page = $query->with(['elf', 'reviewer'])->orderByDesc('applied_at')->orderByDesc('id')->paginate(
+        $page = $query->with(['elf', 'reindeer', 'reviewer'])->orderByDesc('applied_at')->orderByDesc('id')->paginate(
             $request->validated('perPage') ?? LeaveListRequest::DEFAULT_PER_PAGE,
             ['*'],
             'page',

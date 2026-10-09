@@ -8,6 +8,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\ElfController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\ReindeerController;
 use App\Http\Middleware\AuthenticateElf;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\RequireSecureConnection;
@@ -48,6 +49,8 @@ Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->gro
 Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->group(function () {
     Route::middleware(RequirePermission::class.':leave.apply')->group(function () {
         Route::get('/leave/mine', [LeaveController::class, 'mine']);
+        // 登入者擔任照護專員的馴鹿（請假申請可選擇替誰請假）
+        Route::get('/reindeer/mine', [ReindeerController::class, 'mine']);
         Route::post('/leave', [LeaveController::class, 'store'])->middleware('throttle:10,1');
     });
     Route::middleware(RequirePermission::class.':leave.review')->group(function () {
@@ -56,6 +59,17 @@ Route::middleware([AuthenticateElf::class, RequireSecureConnection::class])->gro
         Route::post('/leave/{leave}/reject', [LeaveController::class, 'reject']);
     });
 });
+
+// 動力單位（馴鹿）管理：人力資源部、馴鹿管理部
+Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, RequirePermission::class.':reindeer.manage'])
+    ->group(function () {
+        Route::get('/reindeer', [ReindeerController::class, 'index']);
+        Route::post('/reindeer', [ReindeerController::class, 'store']);
+        Route::get('/reindeer/caretakers', [ReindeerController::class, 'caretakers']);
+        Route::get('/reindeer/{reindeer}/leave', [ReindeerController::class, 'leaves']);
+        Route::put('/reindeer/{reindeer}', [ReindeerController::class, 'update']);
+        Route::delete('/reindeer/{reindeer}', [ReindeerController::class, 'destroy']);
+    });
 
 // 精靈請假紀錄：全部精靈的假單，需人力資源部權限
 Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, RequirePermission::class.':elf.leave'])
