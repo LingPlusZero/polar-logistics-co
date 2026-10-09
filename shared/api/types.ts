@@ -147,3 +147,30 @@ export interface ComplaintListQuery {
   page: number
   perPage: number
 }
+
+// 精靈出勤紀錄（沒有打卡機制，只有列表）
+export interface Attendance {
+  id: number
+  elfNumber: string
+  elfName: string
+  // 本地時間 YYYY-MM-DD HH:mm
+  clockIn: string
+  clockOut: string
+  // 工作時數（分鐘），由上下班時間計算
+  workMinutes: number
+}
+
+export type AttendanceSortKey = 'clockIn' | 'clockOut' | 'number' | 'workMinutes'
+
+// 日期以上班日期篩選（YYYY-MM-DD，起迄皆可為空）；搜尋、篩選、排序、分頁都在後端處理（Demo 由前端模擬）
+export interface AttendanceListQuery {
+  // 精靈編號或姓名
+  search: string
+  departmentId: number | null
+  dateFrom: string | null
+  dateTo: string | null
+  sort: AttendanceSortKey
+  order: SortOrder
+  page: number
+  perPage: number
+}

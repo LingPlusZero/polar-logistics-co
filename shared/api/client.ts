@@ -1,5 +1,7 @@
 import type {
   AnnualStatic,
+  Attendance,
+  AttendanceListQuery,
   AuthSession,
   Career,
   CareerInput,
@@ -29,6 +31,9 @@ export interface ApiClient {
     create(input: CareerInput): Promise<Career>
     update(id: number, input: CareerInput): Promise<Career>
     remove(id: number): Promise<void>
+  }
+  attendance: {
+    list(query: AttendanceListQuery): Promise<Page<Attendance>>
   }
   complaint: {
     // 人力資源部：申訴紀錄

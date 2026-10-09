@@ -49,6 +49,34 @@ export const httpClient: ApiClient = {
     update: (id, input) => request('PUT', `/career/${id}`, input),
     remove: (id) => request('DELETE', `/career/${id}`),
   },
+  attendance: {
+    list: (query) => {
+      const params = new URLSearchParams({
+        sort: query.sort,
+        order: query.order,
+        page: String(query.page),
+        perPage: String(query.perPage),
+      })
+
+      if (query.search.trim() !== '') {
+        params.set('search', query.search.trim())
+      }
+
+      if (query.departmentId !== null) {
+        params.set('departmentId', String(query.departmentId))
+      }
+
+      if (query.dateFrom) {
+        params.set('dateFrom', query.dateFrom)
+      }
+
+      if (query.dateTo) {
+        params.set('dateTo', query.dateTo)
+      }
+
+      return request('GET', `/attendance?${params}`)
+    },
+  },
   complaint: {
     list: (query) => {
       const params = new URLSearchParams({ page: String(query.page), perPage: String(query.perPage) })

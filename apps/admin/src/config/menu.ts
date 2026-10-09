@@ -45,7 +45,12 @@ export const MENU: (MenuItem | MenuGroup)[] = [
         permission: 'elf.complaint',
         component: () => import('../views/ComplaintRecordsView.vue'),
       },
-      { label: '精靈出勤紀錄', path: '/elves/attendance', permission: 'elf.attendance' },
+      {
+        label: '精靈出勤紀錄',
+        path: '/elves/attendance',
+        permission: 'elf.attendance',
+        component: () => import('../views/AttendanceView.vue'),
+      },
     ],
   },
   { label: '動力單位管理', path: '/reindeer', permission: 'reindeer.manage' },

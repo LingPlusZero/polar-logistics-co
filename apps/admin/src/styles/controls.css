@@ -177,3 +177,18 @@
   overflow: hidden;
   clip-path: inset(50%);
 }
+
+/* 可排序的表頭按鈕 */
+.sort {
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.sort:hover {
+  text-decoration: underline;
+}

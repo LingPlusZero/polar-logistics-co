@@ -305,20 +305,6 @@ const confirmDelete = async () => {
   font-size: 0.875rem;
 }
 
-.sort {
-  padding: 0;
-  font: inherit;
-  font-weight: 700;
-  color: inherit;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.sort:hover {
-  text-decoration: underline;
-}
-
 .status--normal {
   color: var(--color-navy);
 }

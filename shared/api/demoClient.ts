@@ -1,11 +1,12 @@
 import type { ApiClient } from './client'
-import type { AnnualStatic, Career, Complaint, Department, Elf, ElfProfile } from './types'
+import type { AnnualStatic, Attendance, Career, Complaint, Department, Elf, ElfProfile } from './types'
 import annualData from './demo/data/annual.json'
 import careerData from './demo/data/career.json'
 import complaintData from './demo/data/complaint.json'
 import departmentData from './demo/data/department.json'
 import elfData from './demo/data/elf.json'
 import rosterData from './demo/data/roster.json'
+import { generateAttendance } from './demo/attendance'
 import { ApiError } from './errors'
 import { PASSWORD_MIN_LENGTH, isValidPassword } from './password'
 import { getStoredProfile, getToken } from './session'
@@ -28,6 +29,10 @@ const departmentName = (departmentId: number | null) =>
   departments.find((department) => department.id === departmentId)?.name ?? null
 
 const elves = elfData as ElfProfile[]
+
+// 出勤紀錄依今天往前產生（唯讀），同一個分頁只算一次
+let attendanceCache: Attendance[] | null = null
+const attendanceRecords = () => (attendanceCache ??= generateAttendance(elves))
 const rosterStore = createStore<Elf>('demo:roster', rosterData as Elf[])
 const complaintStore = createStore<Complaint>('demo:complaint', complaintData as Complaint[])
 
@@ -115,6 +120,56 @@ export const demoClient: ApiClient = {
     },
     async remove(id) {
       careerStore.write(careerStore.read().filter((item) => item.id !== id))
+    },
+  },
+  attendance: {
+    // 唯讀；Demo 沒有後端，日期篩選、排序、分頁在這裡模擬，規則與 AttendanceController::index 一致
+    async list(query) {
+      if (query.dateFrom && query.dateTo && query.dateTo < query.dateFrom) {
+        throw new ApiError(422, '結束日期不可早於開始日期', { dateTo: ['結束日期不可早於開始日期'] })
+      }
+
+      const direction = query.order === 'asc' ? 1 : -1
+      const text = query.search.trim().toLowerCase()
+      // 出勤紀錄不帶部門，篩選時用精靈編號對照
+      const departmentIdOf = (number: string) => elves.find((elf) => elf.number === number)?.departmentId
+
+      const sorted = attendanceRecords()
+        // clockIn 前 10 碼就是上班日期（YYYY-MM-DD），字串比較即可
+        .filter(
+          (item) =>
+            (!query.dateFrom || item.clockIn.slice(0, 10) >= query.dateFrom) &&
+            (!query.dateTo || item.clockIn.slice(0, 10) <= query.dateTo) &&
+            (query.departmentId === null || departmentIdOf(item.elfNumber) === query.departmentId) &&
+            (text === '' ||
+              item.elfNumber.toLowerCase().includes(text) ||
+              item.elfName.toLowerCase().includes(text)),
+        )
+        .sort((a, b) => {
+          const byTime = b.clockIn.localeCompare(a.clockIn) || b.id - a.id
+
+          if (query.sort === 'number') {
+            return direction * a.elfNumber.localeCompare(b.elfNumber) || byTime
+          }
+
+          if (query.sort === 'clockOut') {
+            return direction * a.clockOut.localeCompare(b.clockOut) || byTime
+          }
+
+          if (query.sort === 'workMinutes') {
+            return direction * (a.workMinutes - b.workMinutes) || byTime
+          }
+
+          return direction * a.clockIn.localeCompare(b.clockIn) || byTime
+        })
+
+      return {
+        items: sorted.slice((query.page - 1) * query.perPage, query.page * query.perPage),
+        total: sorted.length,
+        page: Math.max(1, query.page),
+        perPage: query.perPage,
+        lastPage: Math.max(1, Math.ceil(sorted.length / query.perPage)),
+      }
     },
   },
   complaint: {
