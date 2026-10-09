@@ -42,7 +42,7 @@
 - 全部端點需帶 `Authorization: Bearer <token>` 且有 `elf.roster`（人力資源部）；未登入回 401，沒有權限回 403
 - 欄位：`id`、`number`（精靈編號，`E` + 至少 3 位數字，唯一，新增時由系統自動產生）、`name`（≤50）、`departmentId`（必填，須為既有部門）、`department`（唯讀，部門名稱）、`rank`（職稱：實習精靈／正式精靈／資深精靈／部長／副聖誕老人）、`hiredAt`（到職日 `YYYY-MM-DD`，不可晚於今天）、`status`（正常／請假／可能失蹤）、`note`（選填，≤500）、`lastAttendedAt`（最後出勤日 `YYYY-MM-DD`，唯讀，取該精靈出勤紀錄中最近一筆上班時間的日期，沒有紀錄為 null；列表用 `withMax` 一次查出，不會每列多一次查詢）；不回傳密碼與權杖，年資不回傳（由 `hiredAt` 計算）
 - 不可修改欄位：`number`、`hiredAt`（年資由它而來）。`number` 新增與修改都不接受（送來也忽略），新增時取 E 開頭編號的最大數字 + 1（`Elf::nextNumber()`，至少 3 位數，在交易內計算）；`hiredAt` 只在 POST 驗證，PUT 即使帶了也忽略
-- `status` 的「請假」是有請假申請且正值假期才會顯示，不能手動設定：新增與修改只接受「正常」「可能失蹤」，傳「請假」回 422；目前為請假狀態的精靈修改時不驗證也不更動 `status`。請假單功能完成後，由請假單算出（目前尚未實作）
+- `status` 的「請假」是有請假申請且正值假期才會顯示，不能手動設定：新增與修改只接受「正常」「可能失蹤」，傳「請假」回 422；目前為請假狀態的精靈修改時不驗證也不更動 `status`。狀態由請假單算出：核准的假單涵蓋今天就顯示「請假」（`Elf::displayStatus()`；列表用 `withOnLeave` 一次查出），「可能失蹤」優先於請假；資料庫存的 `status` 仍只有「正常」「可能失蹤」
 - GET `/api/elf` 名冊（搜尋、篩選、排序、分頁都在後端）→ 200 `{ items, total, page, perPage, lastPage }`（不包 `data`）；`page` 超出範圍時以資料庫分頁行為回傳該頁（可能為空）
   - 查詢參數（皆選填）：`search`（精靈編號或姓名模糊搜尋，≤50，`%` `_` 當一般字元）、`departmentId`、`sort`（`number`｜`department`｜`seniority`，預設 `number`）、`order`（`asc`｜`desc`，預設 `asc`）、`page`（預設 1）、`perPage`（預設 10，1–50）；參數不合法回 422
   - 年資越高＝到職日越早，所以 `sort=seniority&order=desc` 是年資高到低；同分時以編號升冪，分頁順序才穩定
@@ -60,6 +60,22 @@
 - 資料表 `complaint`：被申訴人刪除時紀錄一併刪除，申訴人、處理人刪除時保留紀錄、欄位設為空
 - 資料由 `ComplaintSeeder` 建立（表內已有資料就不灌入，因為紀錄可能已被結案，不能重新產生）：E016 夜櫻與 E017 晨露一直用小事投訴對方，共 8 筆，4 筆已結案、4 筆處理中；申訴日期以「距第一次執行當天幾天前」設定（87、86、67、49 天前已結案；12、5、3、1 天前處理中），讓預設的最近一週有 3 筆。已灌過的資料庫日期不會再變，需要時可清空 `complaint` 表重灌
 - 測試：tests/Feature/ComplaintTest.php
+
+### api/leave 請假申請／審核
+- 全部端點需帶 `Authorization: Bearer <token>`；未登入回 401，沒有權限回 403
+- 欄位：`id`、`elfNumber`／`elfName`（申請人）、`leaveType`（普通病假 1 天｜魔力枯竭假 2 天｜被人類目擊後心理創傷假 7 天，`LeaveType` enum）、`days`、`startDate`／`endDate`（`YYYY-MM-DD`，迄日含當天，由起日加假別天數算出）、`appliedAt`（申請日期）、`status`（審核中｜核准｜駁回）、`reviewedAt`、`reviewer`（審核人姓名）、`rejectReason`（駁回理由，駁回時必填）
+- POST `/api/leave` 申請（`leave.apply`，所有人；每 IP 每分鐘 10 次）→ 201，回傳該筆；body `{ leaveType, startDate }`，申請日為當天、狀態預設審核中，申請人為登入者
+  - 驗證（422，錯誤在 `errors.startDate`）：起日不可早於今天；請假期間只要有一天落在 12 月就不行（旺季，例如 11/28 起請 7 天也不行）；不可與自己既有的假單重疊（審核中、核准都佔用日期，駁回的不算）
+- GET `/api/leave/mine` 自己的假單（`leave.apply`）→ 200 `{ items, total, page, perPage, lastPage }`；查詢參數（皆選填）：`status`、`dateFrom`、`dateTo`（以申請日期篩選，`YYYY-MM-DD`，含當天，迄日早於起日回 422）、`page`、`perPage`（預設 10，1–50）；申請日新到舊，同日依 id
+- GET `/api/leave/review` 審核範圍內的假單（`leave.review`）→ 同上格式與參數
+  - 審核範圍（`LeaveRequest::scopeReviewableBy`）：部長審自己部門的假單（含實習生，不含自己與其他部長）；副聖誕老人審各部長的假單與自己的假單（申請後同樣是審核中，由自己核准或駁回）
+- GET `/api/leave/records` 精靈請假紀錄（`elf.leave`，人力資源部）→ 200 `{ items, total, page, perPage, lastPage }`，全部精靈的假單；查詢參數（皆選填，日期與審核結果同 `/api/leave/mine`）：`search`（申請人的精靈編號或姓名模糊搜尋，≤50，`%` `_` 當一般字元）、`departmentId`（申請人所屬部門）、`dateFrom`、`dateTo`、`status`、`page`、`perPage`（預設 10，1–50）；申請日新到舊，同日依 id（`LeaveRecordListRequest` 繼承 `LeaveListRequest`）
+- POST `/api/leave/{id}/approve` 核准（`leave.review`）→ 200，回傳該筆；審核人與審核日由系統帶入
+- POST `/api/leave/{id}/reject` 駁回（`leave.review`）→ 200，回傳該筆；body `{ reason }`（必填，≤500）
+  - 審核與駁回共通：不在審核範圍回 403；已審核過回 409（條件式 `UPDATE ... WHERE status = '審核中'`，同時審核只有先到的成功）；已審核的假單不能更改，也沒有修改、刪除端點
+- 馴鹿代請假（照護專員替馴鹿請假）尚未實作，等動力單位管理（`reindeer` 資料表）完成後再加
+- 資料由 `LeaveRequestSeeder` 建立（表內已有資料就不灌入）：12 筆（核准、駁回、審核中皆有；其中 6 筆是 E011 長青一直請假、一直被駁回，最後一張還在審核中），日期以「距第一次執行當天幾天前」設定；E002 雲杉的心理創傷假涵蓋今天，名冊會顯示「請假」
+- 測試：tests/Feature/LeaveTest.php
 
 ### api/attendance 精靈出勤紀錄
 - 沒有真正的打卡機制，只有列表（沒有新增、修改、刪除）；需帶 `Authorization: Bearer <token>` 且有 `elf.attendance`（人力資源部），未登入回 401，沒有權限回 403

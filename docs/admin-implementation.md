@@ -49,7 +49,16 @@
 - 分頁元件抽成 `components/PaginationBar.vue`（名冊、申訴紀錄共用）；表格、提示、文字連結等清單頁共用樣式放在 `src/styles/controls.css`
 - Demo：`demoClient.complaint` 在前端模擬搜尋、篩選與分頁；資料 `shared/api/demo/data/complaint.json`（由 `ComplaintSeeder` 匯出）以 `daysAgo`（距今幾天前）存日期，載入時換算成實際日期，所以預設最近一週永遠有資料；寫入存 sessionStorage（`demo:complaint`），ComplaintSeeder 變動後需重新匯出；`elf.json` 的權限已加上 `complaint.file`
 
-## 閒置自動登出
+## 請假申請與審核
+- 申請頁 `views/LeaveApplyView.vue`（`leave.apply`，所有人）：選假別（下拉選項帶天數）與請假起日，迄日由 `leaveEndDate` 即時算出並顯示；表單的假別、起日與送出按鈕水平並排（≥48em，窄螢幕直向堆疊），日期提示與錯誤統一放在整列下方；下方「我的請假單」列表 + 審核結果與申請日期篩選（起迄皆可留空，預設看全部，可清除）+ 後端分頁（每頁 10 筆）
+- 旺季（12 月）：頁面頂端平時就以紅字顯示「12 月是旺季，不能請假，大家一起撐下去！」，今天在 12 月時表單停用；選的請假期間只要有一天落在 12 月（`touchesPeakSeason`）也會在欄位下方提示並停用送出；後端仍會再驗證（文案在 `shared/api/leave.ts` 的 `PEAK_SEASON_MESSAGE`，與後端 `LeaveApplyRequest` 同步）
+- 假別、天數、旺季規則放在 `shared/api/leave.ts`（`LEAVE_TYPES` 與後端 `LeaveType` 同步；日期運算用本地日期的年月日，避免 `YYYY-MM-DD` 被當 UTC 差一天）
+- 審核頁 `views/LeaveReviewView.vue`（`leave.review`，部長與副聖誕老人；副聖誕老人沒有上層，自己的假單由自己審）：預設只看「審核中」，可切換全部／核准／駁回；頁面上方標示審核範圍；「核准」直接送出，「駁回」開 `ModalDialog` 填必填的駁回理由；審核人與審核日由系統帶入；已審核的不再顯示操作按鈕，遇到 409（已被別人審核）會重新載入清單
+- 精靈請假紀錄 `views/LeaveRecordsView.vue`（`elf.leave`，人力資源部，唯讀）：搜尋（申請人編號/姓名，300ms debounce）、部門篩選、申請日期篩選（預設最近一週，可清除）、審核結果篩選 + 後端分頁（每頁 10 筆）；搜尋、部門、日期用共用的 `components/RecordFilters.vue`，審核結果下拉由 slot 放進去；欄位為精靈編號、申請日期、假別、審核日期、審核結果、駁回理由；Demo 由 `demoClient.leave.records` 模擬
+- 審核結果標籤樣式（`.status--pending`／`--approved`／`--rejected`）在 `src/styles/controls.css`，除了顏色文字本身也標示
+- 名冊的「請假」狀態由請假單決定，不需要前端另外處理
+- Demo：`demoClient.leave` 在前端模擬申請驗證（起日、旺季、重疊）、審核範圍與審核；資料 `shared/api/demo/data/leave.json`（與 `LeaveRequestSeeder` 對應）以 `startAgo`／`appliedAgo`／`reviewedAgo`（距今幾天前，負數為未來）存日期，載入時換算，寫入存 sessionStorage（`demo:leave`）；名冊的「請假」狀態由 `withLastAttended` 依假單算出，LeaveRequestSeeder 變動後 JSON 需同步修改
+- 尚未實作：馴鹿代請假（照護專員可選替自己或馴鹿請假），待動力單位管理完成
 - 後端為準：權杖閒置 30 分鐘即失效（`AuthenticateElf`，見 `docs/api.md`），前端另有計時器讓畫面即時反應，兩邊的 30 分鐘要同步（`Elf::IDLE_TIMEOUT_MINUTES`、`useIdleLogout.ts` 的 `IDLE_TIMEOUT_MS`）
 - `composables/useIdleLogout.ts`（掛在 `AdminLayout`）：監聽 pointerdown／keydown／wheel／touchstart 記錄最後操作時間，每 15 秒用時間戳記比對（不用單一 30 分鐘 setTimeout，因背景分頁計時器會被延後），切回分頁時立刻檢查；超過就呼叫登出 API 後導回登入頁
 - 使用者有操作但沒打 API 時，後端看不到活動，所以每 5 分鐘（且期間有操作）呼叫一次 `auth.me()` 續命

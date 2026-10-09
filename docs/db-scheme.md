@@ -23,6 +23,13 @@
 - migration：`2026_10_12_000001_create_attendance_table.php`
 - seeder：`AttendanceSeeder`（約 200 筆，依執行當天往前產生，規則見 api.md；每次執行先清空再重灌，須排在 ElfSeeder 之後）
 
+## leave_request
+- id、elf_id（請假的精靈，FK → elves.id，cascade on delete）、leave_type（假別，PHP 端用 `LeaveType` enum，天數由假別決定、不存欄位）、start_date、end_date（含當天，由起日 + 假別天數算出）、applied_at（申請日期）、status（審核中／核准／駁回，預設審核中，PHP 端用 `LeaveStatus` enum）、reviewed_at（審核日期，可 null）、reviewer_id（審核人，FK → elves.id，可 null，刪除時設為 null）、reject_reason（駁回理由，可 null，駁回時必填）、timestamps；索引 `(elf_id, start_date, end_date)` 用於重疊檢查與「今天是否在請假」
+- 精靈名冊的「請假」狀態由這張表算出（核准且涵蓋今天），不寫回 `elves.status`
+- migration：`2026_10_13_000001_create_leave_request_table.php`
+- seeder：`LeaveRequestSeeder`（12 筆，含 E011 長青被反覆駁回的 6 筆；表內已有資料就不灌入，須排在 ElfSeeder 之後）
+- 馴鹿代請假待動力單位管理完成後，再加 `reindeer_id`（可 null）
+
 ## reindeer
 
 ## career
