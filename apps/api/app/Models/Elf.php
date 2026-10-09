@@ -49,8 +49,14 @@ class Elf extends Model
     // 預設密碼（新增精靈與 ElfSeeder 共用），由 .env 的 ELF_DEFAULT_PASSWORD 提供
     public static function defaultPassword(): string
     {
-        return config('elf.default_password')
-            ?? throw new \RuntimeException('請在 .env 設定 ELF_DEFAULT_PASSWORD');
+        // .env 寫成 ELF_DEFAULT_PASSWORD= 時 env() 會回傳空字串而不是 null，所以用 empty 判斷
+        $password = config('elf.default_password');
+
+        if (empty($password)) {
+            throw new \RuntimeException('請在 .env 設定 ELF_DEFAULT_PASSWORD');
+        }
+
+        return $password;
     }
 
     public function department(): BelongsTo
