@@ -7,7 +7,7 @@ use App\Models\Department;
 use Illuminate\Database\Seeder;
 
 // 文案來源：docs/website.md「補充資訊 / 職缺參考」，需與原文一致
-// 條列欄位（description、requirements、promotion）以換行分隔，由前端轉成清單
+// 條列欄位（description、requirements、benefits）以換行分隔，由前端轉成清單
 class CareerSeeder extends Seeder
 {
     public function run(): void
@@ -51,7 +51,6 @@ class CareerSeeder extends Seeder
                     '加分項：曾於無煙囪住宅成功入戶',
                 ),
                 'benefits' => '專屬高風險職務保險、煙灰清潔津貼',
-                'promotion' => null,
                 'note' => null,
             ],
             [
@@ -68,7 +67,6 @@ class CareerSeeder extends Seeder
                     '須自備紅色制服（公司不補助）',
                 ),
                 'benefits' => null,
-                'promotion' => null,
                 'note' => '本職缺目前由現任人員續任，歡迎投遞履歷建立人才庫。',
             ],
             [
@@ -85,7 +83,6 @@ class CareerSeeder extends Seeder
                     '能與 07 號單元建立良好關係（已有三任專員離職）',
                 ),
                 'benefits' => '免費體驗動力單元近距離接觸',
-                'promotion' => null,
                 'note' => null,
             ],
             [
@@ -101,7 +98,6 @@ class CareerSeeder extends Seeder
                     '對緞帶有深入理解',
                 ),
                 'benefits' => null,
-                'promotion' => null,
                 'note' => '良率未達標者將面談，面談地點為包裝部角落的小房間。',
             ],
             [
@@ -117,7 +113,6 @@ class CareerSeeder extends Seeder
                     '須簽署「不對審核結果發表任何個人意見」同意書',
                 ),
                 'benefits' => null,
-                'promotion' => null,
                 'note' => '本部門之判定標準屬營業機密，恕不公開。',
             ],
             [
@@ -133,7 +128,6 @@ class CareerSeeder extends Seeder
                     '能接受預估等候時間為「到明年」',
                 ),
                 'benefits' => '全年無休加班津貼（以餅乾計）',
-                'promotion' => null,
                 'note' => null,
             ],
             [
@@ -150,7 +144,6 @@ class CareerSeeder extends Seeder
                     '須具備良好心理素質：名冊內偶有無法解釋之異動，請勿過度追問',
                 ),
                 'benefits' => null,
-                'promotion' => null,
                 'note' => null,
             ],
             [
@@ -161,8 +154,8 @@ class CareerSeeder extends Seeder
                     '年滿 50 歲（精靈年齡）',
                     '對本公司使命有高度熱忱',
                 ),
-                'benefits' => null,
-                'promotion' => $this->lines(
+                // 轉正機會算福利的一部分（docs/website.md「轉正機會」）
+                'benefits' => $this->lines(
                     '實習期滿 12 個月，經部門主管評核後，可轉任正式精靈',
                     '評核項目：出勤穩定度、部門作業表現、對公司使命之熱忱、聖誕夜當晚表現',
                     '歷年實習精靈轉正率：87%（以實際完成實習者計算）',

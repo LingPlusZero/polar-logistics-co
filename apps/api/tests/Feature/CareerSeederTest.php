@@ -6,6 +6,8 @@ use App\Models\Career;
 use Database\Seeders\CareerSeeder;
 use Database\Seeders\DepartmentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class CareerSeederTest extends TestCase
@@ -54,14 +56,36 @@ class CareerSeederTest extends TestCase
         $this->assertNull($jobs[7]['department']);
     }
 
-    public function test_福利與轉正機會欄位(): void
+    public function test_福利欄位_轉正機會併入福利(): void
     {
         $this->seed(CareerSeeder::class);
 
         $this->getJson('/api/career')
-            ->assertJsonPath('0.promotion', null)
-            ->assertJsonPath('0.benefits', '專屬高風險職務保險、煙灰清潔津貼');
+            ->assertJsonPath('0.benefits', '專屬高風險職務保險、煙灰清潔津貼')
+            // 已經沒有獨立的轉正機會欄位
+            ->assertJsonMissingPath('0.promotion');
 
-        $this->assertStringContainsString('87%', Career::find(8)->promotion);
+        $this->assertStringContainsString('87%', Career::find(8)->benefits);
+    }
+
+    public function test_遷移把既有轉正機會接在福利後面(): void
+    {
+        $migration = require database_path('migrations/2026_10_14_000003_merge_promotion_into_benefits_on_career_table.php');
+
+        // 還原到遷移之前的欄位，模擬舊資料
+        $migration->down();
+        Career::query()->delete();
+        DB::table('career')->insert([
+            ['title' => '有福利', 'description' => 'a', 'requirements' => 'b', 'benefits' => '津貼', 'promotion' => "轉正一\n轉正二"],
+            ['title' => '無福利', 'description' => 'a', 'requirements' => 'b', 'benefits' => null, 'promotion' => '轉正三'],
+            ['title' => '無轉正', 'description' => 'a', 'requirements' => 'b', 'benefits' => '保險', 'promotion' => null],
+        ]);
+
+        $migration->up();
+
+        $this->assertFalse(Schema::hasColumn('career', 'promotion'));
+        $this->assertSame("津貼\n轉正一\n轉正二", Career::where('title', '有福利')->value('benefits'));
+        $this->assertSame('轉正三', Career::where('title', '無福利')->value('benefits'));
+        $this->assertSame('保險', Career::where('title', '無轉正')->value('benefits'));
     }
 }

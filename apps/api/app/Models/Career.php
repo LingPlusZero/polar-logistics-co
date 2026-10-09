@@ -15,7 +15,6 @@ class Career extends Model
         'description',
         'requirements',
         'benefits',
-        'promotion',
         'note',
     ];
 

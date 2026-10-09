@@ -21,7 +21,6 @@ class CareerRequest extends FormRequest
             'description' => ['required', 'string', 'max:5000'],
             'requirements' => ['required', 'string', 'max:5000'],
             'benefits' => ['nullable', 'string', 'max:2000'],
-            'promotion' => ['nullable', 'string', 'max:5000'],
             'note' => ['nullable', 'string', 'max:2000'],
         ];
     }

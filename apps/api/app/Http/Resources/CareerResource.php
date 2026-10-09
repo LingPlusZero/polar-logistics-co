@@ -18,7 +18,6 @@ class CareerResource extends JsonResource
             'description' => $this->description,
             'requirements' => $this->requirements,
             'benefits' => $this->benefits,
-            'promotion' => $this->promotion,
             'note' => $this->note,
         ];
     }
