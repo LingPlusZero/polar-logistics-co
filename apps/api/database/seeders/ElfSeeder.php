@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ElfRank;
+use App\Enums\ElfStatus;
 use App\Models\Department;
 use App\Models\Elf;
 use Illuminate\Database\Seeder;
@@ -11,10 +12,7 @@ use Illuminate\Support\Facades\Hash;
 // 人員配置來源：docs/admin.md（每個部門至少 1 名正式/資深精靈與 1 名部長、3 名實習生、1 名副聖誕老人）
 class ElfSeeder extends Seeder
 {
-    // 開發測試用的預設密碼，正式環境上線前必須改掉
-    private const DEFAULT_PASSWORD = '1qaz@WSX3edc';
-
-    // [編號, 姓名, 部門, 職級, 到職日]
+    // [編號, 姓名, 部門, 職級, 到職日, 初始狀態（省略為正常）, 備註（可省略）]
     private const ELVES = [
         ['E001', '白霜', '董事會', ElfRank::ViceSanta, '1987-12-01'],
 
@@ -27,15 +25,15 @@ class ElfSeeder extends Seeder
         ['E008', '星砂', '人力資源部', ElfRank::Minister, '1995-02-06'],
 
         ['E009', '雪松', '禮物包裝部', ElfRank::Senior, '2003-04-18'],
-        ['E010', '蕨影', '禮物包裝部', ElfRank::Regular, '2012-08-30'],
+        ['E010', '蕨影', '禮物包裝部', ElfRank::Regular, '2012-08-30', ElfStatus::MaybeMissing, '疑似在包裝區被誤包進禮物，目前已確認 3 號輸送帶上有一個會說話的禮物盒，尚待拆封確認；拆封前請勿搖晃'],
         ['E011', '長青', '外勤機動部', ElfRank::Senior, '2005-10-10'],
-        ['E012', '岩薔', '外勤機動部', ElfRank::Regular, '2014-06-21'],
+        ['E012', '岩薔', '外勤機動部', ElfRank::Regular, '2014-06-21', ElfStatus::MaybeMissing, '最後一次回報位置為「某戶人家的煙囪內」，預計下一次回報時間不明'],
         ['E013', '苔蘚', '馴鹿管理部', ElfRank::Regular, '2010-12-05'],
         ['E014', '銀杏', '馴鹿管理部', ElfRank::Senior, '2002-03-03'],
-        ['E015', '霜華', '乖寶寶稽核部', ElfRank::Regular, '2011-09-14'],
+        ['E015', '霜華', '乖寶寶稽核部', ElfRank::Regular, '2011-09-14', ElfStatus::MaybeMissing, '自上次稽核起未回報，疑似仍在觀察某位孩子是否真的乖'],
         ['E016', '夜櫻', '客戶體驗部', ElfRank::Senior, '2006-01-27'],
         ['E017', '晨露', '客戶體驗部', ElfRank::Regular, '2016-07-19'],
-        ['E018', '冰晶', '運輸部', ElfRank::Regular, '2013-11-11'],
+        ['E018', '冰晶', '運輸部', ElfRank::Regular, '2013-11-11', ElfStatus::MaybeMissing, '最後出勤紀錄為雪橇維修站，之後下落不明，雪橇備用鑰匙一併失蹤'],
         ['E019', '月桂', '人力資源部', ElfRank::Senior, '2004-05-23'],
 
         ['E020', '小雪', '禮物包裝部', ElfRank::Intern, '2026-07-01'],
@@ -49,14 +47,21 @@ class ElfSeeder extends Seeder
         $departments = Department::pluck('id', 'name');
 
         // 以編號為準，重複執行不會產生重複資料；不覆蓋既有的狀態、備註與已修改的密碼
-        $defaultPassword = Hash::make(self::DEFAULT_PASSWORD);
+        $defaultPassword = Hash::make(Elf::DEFAULT_PASSWORD);
 
-        foreach (self::ELVES as [$number, $name, $department, $rank, $hiredAt]) {
+        foreach (self::ELVES as $row) {
+            [$number, $name, $department, $rank, $hiredAt] = $row;
+            // 省略第 6 欄就是正常（解構短陣列會產生 undefined key 警告，所以另外取）
+            $status = $row[5] ?? null;
+            $note = $row[6] ?? null;
+
             $elf = Elf::firstOrNew(['number' => $number]);
 
-            // 預設密碼只在新增時設定，重複執行不會蓋掉之後修改的密碼
+            // 預設密碼、初始狀態與備註只在新增時設定，重複執行不會蓋掉之後修改的內容
             if (! $elf->exists) {
                 $elf->password = $defaultPassword;
+                $elf->status = $status ?? ElfStatus::Normal;
+                $elf->note = $note;
             }
 
             $elf->fill([

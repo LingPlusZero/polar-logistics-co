@@ -4,6 +4,7 @@ use App\Http\Controllers\AnnualStaticController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\ElfController;
 use App\Http\Middleware\AuthenticateElf;
 use App\Http\Middleware\RequirePermission;
 use App\Http\Middleware\RequireSecureConnection;
@@ -19,6 +20,15 @@ Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, Requi
         Route::post('/career', [CareerController::class, 'store']);
         Route::put('/career/{career}', [CareerController::class, 'update']);
         Route::delete('/career/{career}', [CareerController::class, 'destroy']);
+    });
+
+// 精靈名冊：全部需登入且有名冊權限（人力資源部）
+Route::middleware([AuthenticateElf::class, RequireSecureConnection::class, RequirePermission::class.':elf.roster'])
+    ->group(function () {
+        Route::get('/elf', [ElfController::class, 'index']);
+        Route::post('/elf', [ElfController::class, 'store']);
+        Route::put('/elf/{elf}', [ElfController::class, 'update']);
+        Route::delete('/elf/{elf}', [ElfController::class, 'destroy']);
     });
 Route::get('/statics/annual', [AnnualStaticController::class, 'index']);
 Route::get('/department', [DepartmentController::class, 'index']);
