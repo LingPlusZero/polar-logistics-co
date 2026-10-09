@@ -58,7 +58,15 @@
 - 審核結果標籤樣式（`.status--pending`／`--approved`／`--rejected`）在 `src/styles/controls.css`，除了顏色文字本身也標示
 - 名冊的「請假」狀態由請假單決定，不需要前端另外處理
 - Demo：`demoClient.leave` 在前端模擬申請驗證（起日、旺季、重疊）、審核範圍與審核；資料 `shared/api/demo/data/leave.json`（與 `LeaveRequestSeeder` 對應）以 `startAgo`／`appliedAgo`／`reviewedAgo`（距今幾天前，負數為未來）存日期，載入時換算，寫入存 sessionStorage（`demo:leave`）；名冊的「請假」狀態由 `withLastAttended` 依假單算出，LeaveRequestSeeder 變動後 JSON 需同步修改
-- 尚未實作：馴鹿代請假（照護專員可選替自己或馴鹿請假），待動力單位管理完成
+- 馴鹿代請假：申請頁載入時呼叫 `api.reindeer.mine()`，有照護的馴鹿才在表單最上方顯示「請假對象」單選（自己／各隻馴鹿），預設自己，送出時帶 `reindeerId`；「我的請假單」與審核頁多一欄「請假對象」（自己或「馴鹿 名字（編號）」）。Demo 在 `demoClient.leave.apply` 模擬同樣的限制（只有照護專員、自己與每隻馴鹿分開算重疊）
+
+## 動力單位管理
+- 頁面 `views/ReindeerView.vue`（`reindeer.manage`）：9 隻不分頁、不搜尋，排序交給後端（`api.reindeer.list({ sort, order })`），表頭按鈕只有編號與年資（點同一欄切換升降冪，換欄時年資先看高的，編號先升冪）；沒有「部門」排序，因為動力單位沒有部門（docs/admin.md 寫的排序「年資、部門、編號」只做年資與編號）
+- 欄位：姓名、編號、到職日期、年資（`utils/seniority.ts` 由到職日算）、上次保養日期、下次保養日期（後端算出）、照護專員、備註
+- 新增／修改共用 `components/ReindeerFormDialog.vue`（有帶 `reindeer` 為編輯）：編號一律停用（新增時顯示「儲存後自動產生」）、到職日期編輯時停用；下次保養日期欄位停用，隨上次保養日期用 `shared/api/reindeer.ts` 的 `nextMaintenanceDate` 即時預覽（與後端同一套「加 3 個月、月底不溢位」）；照護專員下拉選項來自 `api.reindeer.caretakers()`（馴鹿管理部的精靈）
+- 刪除用 `ConfirmDialog` 二次確認，說明該動力單位的請假記錄會一併刪除
+- 每列有「請假記錄」按鈕可展開／收合子表格（一次只展開一隻，展開時才呼叫 `api.reindeer.leaves(id)`）：申請日期、假別、審核日期、審核結果、駁回理由；07 雷霆預設有 4 筆駁回、1 筆審核中
+- Demo：`demoClient.reindeer` 在前端模擬排序、新增（編號取最大值 + 1，至少兩位數）、修改（編號與到職日沿用原值）、刪除（假單一併刪除）與照護專員限制；資料 `shared/api/demo/data/reindeer.json`（與 `ReindeerSeeder` 對應）以 `maintainedAgo`（距今幾天前）存上次保養日，載入時換算，寫入存 sessionStorage（`demo:reindeer`）；07 的假單放在 `leave.json`（有 `reindeerNumber`／`reindeerName`），ReindeerSeeder 變動後 JSON 需同步修改
 - 後端為準：權杖閒置 30 分鐘即失效（`AuthenticateElf`，見 `docs/api.md`），前端另有計時器讓畫面即時反應，兩邊的 30 分鐘要同步（`Elf::IDLE_TIMEOUT_MINUTES`、`useIdleLogout.ts` 的 `IDLE_TIMEOUT_MS`）
 - `composables/useIdleLogout.ts`（掛在 `AdminLayout`）：監聽 pointerdown／keydown／wheel／touchstart 記錄最後操作時間，每 15 秒用時間戳記比對（不用單一 30 分鐘 setTimeout，因背景分頁計時器會被延後），切回分頁時立刻檢查；超過就呼叫登出 API 後導回登入頁
 - 使用者有操作但沒打 API 時，後端看不到活動，所以每 5 分鐘（且期間有操作）呼叫一次 `auth.me()` 續命

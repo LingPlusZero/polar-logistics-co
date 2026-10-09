@@ -28,9 +28,15 @@
 - 精靈名冊的「請假」狀態由這張表算出（核准且涵蓋今天），不寫回 `elves.status`
 - migration：`2026_10_13_000001_create_leave_request_table.php`
 - seeder：`LeaveRequestSeeder`（12 筆，含 E011 長青被反覆駁回的 6 筆；表內已有資料就不灌入，須排在 ElfSeeder 之後）
-- 馴鹿代請假待動力單位管理完成後，再加 `reindeer_id`（可 null）
+- reindeer_id（代請假的馴鹿，FK → reindeer.id，可 null＝精靈自己請假，cascade on delete）：照護專員代馴鹿請假時，`elf_id` 仍是申請人（照護專員），`reindeer_id` 是馴鹿；馴鹿的假單不影響精靈名冊的「請假」狀態，也不列入精靈請假紀錄
+- 日期比對一律用「起日 < 迄日隔天」「迄日 >= 起日」：經 model 寫入的日期在 SQLite 會帶時間，直接比 <= 日期字串會漏掉當天（MySQL date 欄位不受影響）
+- migration：`2026_10_14_000002_add_reindeer_id_to_leave_request_table.php`
 
 ## reindeer
+- id、number（動力單位編號，unique，兩位數以上，例如 01，新增時由系統自動產生）、name、hired_at（到職日，年資由此計算，不存欄位）、last_maintained_at（上次保養日期）、caretaker_id（照護專員，FK → elves.id，可 null，刪除時設為 null；須為馴鹿管理部的精靈）、note（≤500，可 null）、timestamps
+- 下次保養日期不存欄位，由 `last_maintained_at` 加 3 個月算出（`Reindeer::nextMaintenanceAt()`，`addMonthsNoOverflow`：月底不溢位）
+- migration：`2026_10_14_000001_create_reindeer_table.php`
+- seeder：`ReindeerSeeder`（9 隻，編號 01–09，來自 docs/brand.md；表內已有資料就不灌入，須排在 ElfSeeder 之後；同時建立 07 的假單，見 api.md）
 
 ## career
 - id、title、department_id（FK → department.id，可 null＝不限部門，restrict on delete）、description（text）、requirements（text）、benefits（text，可 null）、promotion（text，可 null）、note（text，可 null）、timestamps

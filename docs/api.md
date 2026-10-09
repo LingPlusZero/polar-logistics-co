@@ -73,9 +73,24 @@
 - POST `/api/leave/{id}/approve` 核准（`leave.review`）→ 200，回傳該筆；審核人與審核日由系統帶入
 - POST `/api/leave/{id}/reject` 駁回（`leave.review`）→ 200，回傳該筆；body `{ reason }`（必填，≤500）
   - 審核與駁回共通：不在審核範圍回 403；已審核過回 409（條件式 `UPDATE ... WHERE status = '審核中'`，同時審核只有先到的成功）；已審核的假單不能更改，也沒有修改、刪除端點
-- 馴鹿代請假（照護專員替馴鹿請假）尚未實作，等動力單位管理（`reindeer` 資料表）完成後再加
+- 馴鹿代請假：照護專員在 POST `/api/leave` 多帶 `reindeerId`（選填，省略＝替自己請假）即可代自己照護的馴鹿請假；只有該馴鹿的照護專員能代請，別人的馴鹿與不存在的馴鹿同樣回 422（`errors.reindeerId`，不透露馴鹿是否存在）。假單的 `elfNumber`／`elfName` 仍是申請人（照護專員），另有 `reindeerNumber`／`reindeerName`（替自己請假為 null）。重疊檢查把精靈自己與每隻馴鹿分開計算；起日、12 月旺季規則相同；審核由照護專員的上層進行（與精靈自己的假單相同）。馴鹿的假單不影響照護專員的「請假」狀態，也不列入 `/api/leave/records`
+- 資料由 `LeaveRequestSeeder` 建立的 E011 長青之外，07 雷霆的假單由 `ReindeerSeeder` 建立（見 api/reindeer）
 - 資料由 `LeaveRequestSeeder` 建立（表內已有資料就不灌入）：12 筆（核准、駁回、審核中皆有；其中 6 筆是 E011 長青一直請假、一直被駁回，最後一張還在審核中），日期以「距第一次執行當天幾天前」設定；E002 雲杉的心理創傷假涵蓋今天，名冊會顯示「請假」
 - 測試：tests/Feature/LeaveTest.php
+
+### api/reindeer 動力單位（馴鹿）管理
+- 管理端點需帶 `Authorization: Bearer <token>` 且有 `reindeer.manage`（人力資源部、馴鹿管理部）；未登入回 401，沒有權限回 403
+- 欄位：`id`、`number`（編號，兩位數以上，例如 `01`，唯一，新增時由系統自動產生）、`name`（≤50）、`hiredAt`（到職日 `YYYY-MM-DD`，不可晚於今天）、`lastMaintainedAt`（上次保養日期，不可晚於今天）、`nextMaintenanceAt`（下次保養日期，唯讀，上次保養後滿 3 個月，月底不溢位）、`caretakerId`（照護專員，必填，須為馴鹿管理部的精靈）、`caretaker`（唯讀，照護專員姓名）、`note`（選填，≤500）；年資不回傳（由 `hiredAt` 計算）
+- 不可修改欄位：`number`、`hiredAt`（年資由它而來）、`nextMaintenanceAt`。`number` 新增與修改都不接受（送來也忽略），新增時取編號的最大數字 + 1（`Reindeer::nextNumber()`，至少 2 位數，在交易內計算）；`hiredAt` 只在 POST 驗證，PUT 即使帶了也忽略
+- GET `/api/reindeer` 清單 → 200，陣列（目前只有 9 隻，不分頁、不搜尋）；查詢參數（皆選填）：`sort`（`number`｜`seniority`，預設 `number`）、`order`（`asc`｜`desc`，預設 `asc`）；年資越高＝到職日越早，所以 `sort=seniority&order=desc` 是年資高到低；參數不合法回 422
+- POST `/api/reindeer` 新增 → 201，回傳該筆
+- PUT `/api/reindeer/{id}` 修改 → 200，回傳該筆（需帶 `name`、`lastMaintainedAt`、`caretakerId`，`note` 選填）
+- DELETE `/api/reindeer/{id}` 刪除 → 204；該馴鹿的假單一併刪除
+- GET `/api/reindeer/caretakers` 可選的照護專員（`reindeer.manage`）→ 200 `[{ id, number, name }]`，馴鹿管理部的精靈（名冊只有人力資源部能看，所以另開端點給馴鹿管理部使用）
+- GET `/api/reindeer/{id}/leave` 該馴鹿的請假記錄（`reindeer.manage`）→ 200，陣列，欄位同 api/leave，申請日新到舊
+- GET `/api/reindeer/mine` 登入者擔任照護專員的馴鹿（`leave.apply`，所有人）→ 200 `[{ id, number, name }]`；請假申請頁據此決定是否顯示「請假對象」選項
+- 資料由 `ReindeerSeeder` 建立（表內已有資料就不灌入）：9 隻，編號 01–09，名字與備註見 docs/brand.md（01 魯道夫、07 問題單位、09 新一代）；照護專員為馴鹿管理部的 E004、E013、E014；上次保養日以「距第一次執行當天幾天前」設定。07 雷霆由 E013 代請 5 張假單：4 張被 E004 駁回、1 張審核中
+- 測試：tests/Feature/ReindeerTest.php
 
 ### api/attendance 精靈出勤紀錄
 - 沒有真正的打卡機制，只有列表（沒有新增、修改、刪除）；需帶 `Authorization: Bearer <token>` 且有 `elf.attendance`（人力資源部），未登入回 401，沒有權限回 403
