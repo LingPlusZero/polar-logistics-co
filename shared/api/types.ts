@@ -183,3 +183,51 @@ export interface AttendanceListQuery {
   page: number
   perPage: number
 }
+
+export type LeaveType = '普通病假' | '魔力枯竭假' | '被人類目擊後心理創傷假'
+
+export type LeaveStatus = '審核中' | '核准' | '駁回'
+
+// 請假單；elfNumber 是申請人
+export interface Leave {
+  id: number
+  elfNumber: string
+  elfName: string
+  leaveType: LeaveType
+  // 假別固定天數
+  days: number
+  // YYYY-MM-DD，迄日含當天
+  startDate: string
+  endDate: string
+  appliedAt: string
+  status: LeaveStatus
+  reviewedAt: string | null
+  // 審核人姓名
+  reviewer: string | null
+  rejectReason: string | null
+}
+
+// 申請時只送假別與起日，迄日由假別天數算出，申請日為當天
+export interface LeaveInput {
+  leaveType: LeaveType
+  startDate: string
+}
+
+// 我的假單與審核清單共用
+export interface LeaveListQuery {
+  status: LeaveStatus | null
+  // 申請日期（YYYY-MM-DD，起迄皆可為空或省略）
+  dateFrom?: string | null
+  dateTo?: string | null
+  page: number
+  perPage: number
+}
+
+// 精靈請假紀錄（人力資源部）：搜尋與部門針對申請人，日期以申請日期篩選（起迄皆可為空）
+export interface LeaveRecordQuery extends LeaveListQuery {
+  // 精靈編號或姓名
+  search: string
+  departmentId: number | null
+  dateFrom: string | null
+  dateTo: string | null
+}

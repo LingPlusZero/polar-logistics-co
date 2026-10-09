@@ -1,4 +1,5 @@
 import type { ApiClient } from './client'
+import type { LeaveListQuery } from './types'
 import { ApiError } from './errors'
 import { getToken, notifyUnauthorized } from './session'
 
@@ -33,6 +34,25 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
 
   return response.status === 204 ? (undefined as T) : response.json()
+}
+
+// 我的假單、審核清單與請假紀錄共用的查詢參數
+const leaveParams = (query: LeaveListQuery) => {
+  const params = new URLSearchParams({ page: String(query.page), perPage: String(query.perPage) })
+
+  if (query.status !== null) {
+    params.set('status', query.status)
+  }
+
+  if (query.dateFrom) {
+    params.set('dateFrom', query.dateFrom)
+  }
+
+  if (query.dateTo) {
+    params.set('dateTo', query.dateTo)
+  }
+
+  return params
 }
 
 export const httpClient: ApiClient = {
@@ -105,6 +125,26 @@ export const httpClient: ApiClient = {
     },
     close: (id, resolution) => request('POST', `/complaint/${id}/close`, { resolution }),
     create: (input) => request('POST', '/complaint', input),
+  },
+  leave: {
+    mine: (query) => request('GET', `/leave/mine?${leaveParams(query)}`),
+    review: (query) => request('GET', `/leave/review?${leaveParams(query)}`),
+    records: (query) => {
+      const params = leaveParams(query)
+
+      if (query.search.trim() !== '') {
+        params.set('search', query.search.trim())
+      }
+
+      if (query.departmentId !== null) {
+        params.set('departmentId', String(query.departmentId))
+      }
+
+      return request('GET', `/leave/records?${params}`)
+    },
+    apply: (input) => request('POST', '/leave', input),
+    approve: (id) => request('POST', `/leave/${id}/approve`),
+    reject: (id, reason) => request('POST', `/leave/${id}/reject`, { reason }),
   },
   department: {
     list: () => request('GET', '/department'),

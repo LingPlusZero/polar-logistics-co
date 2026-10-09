@@ -1,0 +1,14 @@
+[
+    { "id": 1, "elfNumber": "E016", "elfName": "夜櫻", "leaveType": "普通病假", "startAgo": 20, "appliedAgo": 21, "reviewer": "霧凇", "reviewedAgo": 20, "rejectReason": null },
+    { "id": 2, "elfNumber": "E021", "elfName": "細沙", "leaveType": "魔力枯竭假", "startAgo": 9, "appliedAgo": 10, "reviewer": "霧凇", "reviewedAgo": 9, "rejectReason": "人力不足，請改期後重新申請" },
+    { "id": 3, "elfNumber": "E017", "elfName": "晨露", "leaveType": "普通病假", "startAgo": -2, "appliedAgo": 1, "reviewer": null, "reviewedAgo": null, "rejectReason": null },
+    { "id": 4, "elfNumber": "E020", "elfName": "小雪", "leaveType": "魔力枯竭假", "startAgo": -3, "appliedAgo": 0, "reviewer": null, "reviewedAgo": null, "rejectReason": null },
+    { "id": 5, "elfNumber": "E002", "elfName": "雲杉", "leaveType": "被人類目擊後心理創傷假", "startAgo": 5, "appliedAgo": 6, "reviewer": "白霜", "reviewedAgo": 5, "rejectReason": null },
+    { "id": 6, "elfNumber": "E004", "elfName": "松果", "leaveType": "魔力枯竭假", "startAgo": -5, "appliedAgo": 0, "reviewer": null, "reviewedAgo": null, "rejectReason": null },
+    { "id": 7, "elfNumber": "E011", "elfName": "長青", "leaveType": "普通病假", "startAgo": 60, "appliedAgo": 61, "reviewer": "冬青", "reviewedAgo": 60, "rejectReason": "外勤機動部當週出勤人力不足，請另擇日期" },
+    { "id": 8, "elfNumber": "E011", "elfName": "長青", "leaveType": "魔力枯竭假", "startAgo": 45, "appliedAgo": 46, "reviewer": "冬青", "reviewedAgo": 44, "rejectReason": "同一週內已核准其他精靈請假，請改期" },
+    { "id": 9, "elfNumber": "E011", "elfName": "長青", "leaveType": "普通病假", "startAgo": 30, "appliedAgo": 31, "reviewer": "冬青", "reviewedAgo": 30, "rejectReason": "煙囪巡檢排程已滿，無法調度，請另擇日期" },
+    { "id": 10, "elfNumber": "E011", "elfName": "長青", "leaveType": "被人類目擊後心理創傷假", "startAgo": 16, "appliedAgo": 17, "reviewer": "冬青", "reviewedAgo": 15, "rejectReason": "事由與假別不符，請與部長確認後重新申請" },
+    { "id": 11, "elfNumber": "E011", "elfName": "長青", "leaveType": "普通病假", "startAgo": 4, "appliedAgo": 5, "reviewer": "冬青", "reviewedAgo": 4, "rejectReason": "本月已申請多次，請先與部長確認需求" },
+    { "id": 12, "elfNumber": "E011", "elfName": "長青", "leaveType": "魔力枯竭假", "startAgo": -6, "appliedAgo": 0, "reviewer": null, "reviewedAgo": null, "rejectReason": null }
+]

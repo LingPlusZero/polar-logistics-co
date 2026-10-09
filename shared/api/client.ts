@@ -15,6 +15,10 @@ import type {
   ElfListQuery,
   ElfProfile,
   ElfUpdateInput,
+  Leave,
+  LeaveInput,
+  LeaveListQuery,
+  LeaveRecordQuery,
   Page,
 } from './types'
 
@@ -42,6 +46,18 @@ export interface ApiClient {
     close(id: number, resolution: string): Promise<Complaint>
     // 我要申訴（所有人）
     create(input: ComplaintInput): Promise<ComplaintReceipt>
+  }
+  leave: {
+    // 自己的假單
+    mine(query: LeaveListQuery): Promise<Page<Leave>>
+    // 審核範圍內的假單：部長審自己部門（含實習生）、副聖誕老人審各部長
+    review(query: LeaveListQuery): Promise<Page<Leave>>
+    // 人力資源部：全部精靈的請假紀錄
+    records(query: LeaveRecordQuery): Promise<Page<Leave>>
+    apply(input: LeaveInput): Promise<Leave>
+    approve(id: number): Promise<Leave>
+    // 駁回理由必填
+    reject(id: number, reason: string): Promise<Leave>
   }
   department: {
     list(): Promise<Department[]>

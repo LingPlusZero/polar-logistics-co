@@ -146,6 +146,21 @@
   border: 1px solid currentcolor;
 }
 
+/* 審核結果：審核中、核准、駁回 */
+.status--pending {
+  font-weight: 700;
+  color: var(--color-red);
+}
+
+.status--approved {
+  color: var(--color-navy);
+}
+
+.status--rejected {
+  color: var(--color-text-muted);
+  background: var(--color-ice);
+}
+
 /* 操作成功等提示 */
 .notice {
   margin-top: 1rem;

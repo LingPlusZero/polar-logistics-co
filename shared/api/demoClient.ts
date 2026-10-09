@@ -1,15 +1,20 @@
 import type { ApiClient } from './client'
-import type { AnnualStatic, Attendance, Career, Complaint, Department, Elf, ElfProfile } from './types'
+import type { AnnualStatic, Attendance, Career, Complaint, Department, Elf, ElfProfile, Leave, LeaveListQuery, Page } from './types'
 import annualData from './demo/data/annual.json'
 import careerData from './demo/data/career.json'
 import complaintData from './demo/data/complaint.json'
 import departmentData from './demo/data/department.json'
 import elfData from './demo/data/elf.json'
+import leaveData from './demo/data/leave.json'
 import rosterData from './demo/data/roster.json'
 import { generateAttendance } from './demo/attendance'
 import { ApiError } from './errors'
+import { addDays, leaveDays, leaveEndDate, PEAK_SEASON_MESSAGE, touchesPeakSeason } from './leave'
 import { PASSWORD_MIN_LENGTH, isValidPassword } from './password'
 import { getStoredProfile, getToken } from './session'
+
+// 本地日期 YYYY-MM-DD
+const todayString = () => new Date().toLocaleDateString('sv-SE')
 
 // Demo 模式：讀 JSON 快照，寫入只存 sessionStorage，重新整理就重置
 function createStore<T>(key: string, seed: T[]) {
@@ -42,7 +47,20 @@ const withLastAttended = (elf: StoredElf): Elf => {
     .sort()
     .at(-1)
 
-  return { ...elf, lastAttendedAt: last ? last.slice(0, 10) : null }
+  // 「請假」由請假單決定：核准且今天在假期內；「可能失蹤」優先（與後端 Elf::displayStatus 一致）
+  const today = todayString()
+  const onLeave = leaveStore
+    .read()
+    .some(
+      (leave) =>
+        leave.elfNumber === elf.number &&
+        leave.status === '核准' &&
+        leave.startDate <= today &&
+        leave.endDate >= today,
+    )
+  const status = elf.status !== '可能失蹤' && onLeave ? '請假' : elf.status
+
+  return { ...elf, status, lastAttendedAt: last ? last.slice(0, 10) : null }
 }
 // 名冊存的欄位不含最後出勤日（它由出勤紀錄算出，輸出時才帶上）
 type StoredElf = Omit<Elf, 'lastAttendedAt'>
@@ -56,6 +74,105 @@ const complaintSeed: Complaint[] = (complaintData as ComplaintSeed[]).map(({ day
   return { ...rest, filedAt: date.toLocaleDateString('sv-SE') }
 })
 const complaintStore = createStore<Complaint>('demo:complaint', complaintSeed)
+
+// 預設假單的日期以「距今幾天前」存（負數為未來），載入時換算成日期；與 LeaveRequestSeeder 一致
+type LeaveSeed = Pick<Leave, 'id' | 'elfNumber' | 'elfName' | 'leaveType' | 'rejectReason'> & {
+  startAgo: number
+  appliedAgo: number
+  reviewer: string | null
+  reviewedAgo: number | null
+}
+
+const daysFromToday = (daysAgo: number) => addDays(todayString(), -daysAgo)
+
+const leaveSeed: Leave[] = (leaveData as LeaveSeed[]).map((item) => {
+  const startDate = daysFromToday(item.startAgo)
+
+  return {
+    id: item.id,
+    elfNumber: item.elfNumber,
+    elfName: item.elfName,
+    leaveType: item.leaveType,
+    days: leaveDays(item.leaveType),
+    startDate,
+    endDate: leaveEndDate(startDate, item.leaveType),
+    appliedAt: daysFromToday(item.appliedAgo),
+    status: item.reviewer === null ? '審核中' : item.rejectReason ? '駁回' : '核准',
+    reviewedAt: item.reviewedAgo === null ? null : daysFromToday(item.reviewedAgo),
+    reviewer: item.reviewer,
+    rejectReason: item.rejectReason,
+  }
+})
+const leaveStore = createStore<Leave>('demo:leave', leaveSeed)
+
+// 審核範圍（與後端 LeaveRequest::scopeReviewableBy 一致）：部長審自己部門的非部長，副聖誕老人審各部長與自己
+const canReviewLeave = (reviewer: ElfProfile | null, leave: Leave) => {
+  const applicant = elves.find((elf) => elf.number === leave.elfNumber)
+
+  if (!reviewer || !applicant) {
+    return false
+  }
+
+  if (reviewer.rank === '部長') {
+    return applicant.departmentId === reviewer.departmentId && applicant.rank !== '部長'
+  }
+
+  return reviewer.rank === '副聖誕老人' && (applicant.rank === '部長' || applicant.number === reviewer.number)
+}
+
+// 審核：只能審核範圍內、且尚在審核中的假單；審核人與審核日由系統帶入
+const decideLeave = async (id: number, status: '核准' | '駁回', rejectReason: string | null = null): Promise<Leave> => {
+  const profile = getStoredProfile()
+  const items = leaveStore.read()
+  const current = items.find((leave) => leave.id === id)
+
+  if (!current) {
+    throw new ApiError(404, '找不到這張假單')
+  }
+
+  if (!canReviewLeave(profile, current)) {
+    throw new ApiError(403, '沒有權限審核這張假單')
+  }
+
+  if (current.status !== '審核中') {
+    throw new ApiError(409, '這張假單已經審核過')
+  }
+
+  const decided: Leave = {
+    ...current,
+    status,
+    reviewedAt: todayString(),
+    reviewer: profile?.name ?? null,
+    rejectReason,
+  }
+  leaveStore.write(items.map((leave) => (leave.id === id ? decided : leave)))
+  return decided
+}
+
+// 與後端一致：申請日新到舊，同日以 id
+const pageOfLeaves = (items: Leave[], query: LeaveListQuery): Page<Leave> => {
+  if (query.dateFrom && query.dateTo && query.dateTo < query.dateFrom) {
+    throw new ApiError(422, '結束日期不可早於開始日期', { dateTo: ['結束日期不可早於開始日期'] })
+  }
+
+  // 日期以申請日期篩選，起迄含當天
+  const sorted = items
+    .filter(
+      (leave) =>
+        (query.status === null || leave.status === query.status) &&
+        (!query.dateFrom || leave.appliedAt >= query.dateFrom) &&
+        (!query.dateTo || leave.appliedAt <= query.dateTo),
+    )
+    .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt) || b.id - a.id)
+
+  return {
+    items: sorted.slice((query.page - 1) * query.perPage, query.page * query.perPage),
+    total: sorted.length,
+    page: Math.max(1, query.page),
+    perPage: query.perPage,
+    lastPage: Math.max(1, Math.ceil(sorted.length / query.perPage)),
+  }
+}
 
 const PASSWORD_KEY_PREFIX = 'demo:password:'
 
@@ -277,6 +394,102 @@ export const demoClient: ApiClient = {
       }
       complaintStore.write([...items, created])
       return { id: created.id, elfNumber: created.elfNumber, elfName: created.elfName }
+    },
+  },
+  leave: {
+    async mine(query) {
+      const profile = getStoredProfile()
+      return pageOfLeaves(
+        leaveStore.read().filter((leave) => leave.elfNumber === profile?.number),
+        query,
+      )
+    },
+    async review(query) {
+      const profile = getStoredProfile()
+      return pageOfLeaves(
+        leaveStore.read().filter((leave) => canReviewLeave(profile, leave)),
+        query,
+      )
+    },
+    // 全部精靈的請假紀錄；搜尋與部門針對申請人（與後端 LeaveController::records 一致）
+    async records(query) {
+      const text = query.search.trim().toLowerCase()
+      const departmentIdOf = (number: string) => elves.find((elf) => elf.number === number)?.departmentId
+
+      return pageOfLeaves(
+        leaveStore
+          .read()
+          .filter(
+            (leave) =>
+              (query.departmentId === null || departmentIdOf(leave.elfNumber) === query.departmentId) &&
+              (text === '' ||
+                leave.elfNumber.toLowerCase().includes(text) ||
+                leave.elfName.toLowerCase().includes(text)),
+          ),
+        query,
+      )
+    },
+    async apply(input) {
+      const profile = getStoredProfile()
+
+      if (!profile) {
+        throw new ApiError(401, '尚未登入')
+      }
+
+      const today = todayString()
+
+      if (input.startDate < today) {
+        throw new ApiError(422, '請假起日不可早於今天', { startDate: ['請假起日不可早於今天'] })
+      }
+
+      const endDate = leaveEndDate(input.startDate, input.leaveType)
+
+      if (touchesPeakSeason(input.startDate, endDate)) {
+        throw new ApiError(422, PEAK_SEASON_MESSAGE, { startDate: [PEAK_SEASON_MESSAGE] })
+      }
+
+      const items = leaveStore.read()
+      // 每個假不能重疊；被駁回的假單不佔用日期
+      const overlapping = items.some(
+        (leave) =>
+          leave.elfNumber === profile.number &&
+          leave.status !== '駁回' &&
+          leave.startDate <= endDate &&
+          leave.endDate >= input.startDate,
+      )
+
+      if (overlapping) {
+        throw new ApiError(422, '這段期間已經有請假單，不能重疊', {
+          startDate: ['這段期間已經有請假單，不能重疊'],
+        })
+      }
+
+      const created: Leave = {
+        id: Math.max(0, ...items.map((leave) => leave.id)) + 1,
+        elfNumber: profile.number,
+        elfName: profile.name,
+        leaveType: input.leaveType,
+        days: leaveDays(input.leaveType),
+        startDate: input.startDate,
+        endDate,
+        appliedAt: today,
+        status: '審核中',
+        reviewedAt: null,
+        reviewer: null,
+        rejectReason: null,
+      }
+      leaveStore.write([...items, created])
+      return created
+    },
+    async approve(id) {
+      return decideLeave(id, '核准')
+    },
+    async reject(id, reason) {
+      if (reason.trim() === '') {
+        throw new ApiError(422, '駁回理由必填', { reason: ['駁回理由必填'] })
+      }
+
+      return decideLeave(id, '駁回', reason.trim())
     },
   },
   department: {

@@ -19,8 +19,18 @@ export const MENU: (MenuItem | MenuGroup)[] = [
   {
     label: '請假',
     children: [
-      { label: '請假申請', path: '/leave/apply', permission: 'leave.apply' },
-      { label: '請假審核', path: '/leave/review', permission: 'leave.review' },
+      {
+        label: '請假申請',
+        path: '/leave/apply',
+        permission: 'leave.apply',
+        component: () => import('../views/LeaveApplyView.vue'),
+      },
+      {
+        label: '請假審核',
+        path: '/leave/review',
+        permission: 'leave.review',
+        component: () => import('../views/LeaveReviewView.vue'),
+      },
     ],
   },
   {
@@ -38,7 +48,12 @@ export const MENU: (MenuItem | MenuGroup)[] = [
         permission: 'elf.roster',
         component: () => import('../views/ElfRosterView.vue'),
       },
-      { label: '精靈請假紀錄', path: '/elves/leave-records', permission: 'elf.leave' },
+      {
+        label: '精靈請假紀錄',
+        path: '/elves/leave-records',
+        permission: 'elf.leave',
+        component: () => import('../views/LeaveRecordsView.vue'),
+      },
       {
         label: '精靈被申訴紀錄',
         path: '/elves/complaints',
