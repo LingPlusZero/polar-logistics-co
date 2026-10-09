@@ -42,6 +42,19 @@ export const httpClient: ApiClient = {
     update: (id, input) => request('PUT', `/career/${id}`, input),
     remove: (id) => request('DELETE', `/career/${id}`),
   },
+  complaint: {
+    list: (query) => {
+      const params = new URLSearchParams({ page: String(query.page), perPage: String(query.perPage) })
+
+      if (query.status !== null) {
+        params.set('status', query.status)
+      }
+
+      return request('GET', `/complaint?${params}`)
+    },
+    close: (id, resolution) => request('POST', `/complaint/${id}/close`, { resolution }),
+    create: (input) => request('POST', '/complaint', input),
+  },
   department: {
     list: () => request('GET', '/department'),
   },

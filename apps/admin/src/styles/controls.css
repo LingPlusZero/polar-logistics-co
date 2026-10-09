@@ -81,3 +81,98 @@
   font-size: 0.8125rem;
   color: var(--color-red);
 }
+
+/* 表格（清單頁共用） */
+.table-wrap {
+  margin-top: 1rem;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--color-ice-dark);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* 換頁、排序時保留舊資料並淡化，避免畫面閃爍 */
+.table--loading {
+  opacity: 0.5;
+}
+
+.table th,
+.table td {
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-ice-dark);
+}
+
+.table thead th {
+  font-weight: 700;
+  background: var(--color-ice);
+}
+
+.table__name {
+  font-weight: 700;
+}
+
+/* 備註、事由等長文字限制寬度並換行 */
+.table__note {
+  min-width: 10rem;
+  max-width: 18rem;
+  white-space: normal;
+  color: var(--color-text-muted);
+}
+
+.table__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.table-empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* 狀態標籤：除了顏色，文字本身也標示 */
+.status {
+  display: inline-block;
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid currentcolor;
+}
+
+/* 操作成功等提示 */
+.notice {
+  margin-top: 1rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--color-ice-dark);
+  border-left: 3px solid var(--color-navy);
+}
+
+/* 文字連結樣式的按鈕 */
+.link {
+  padding: 0;
+  font: inherit;
+  color: var(--color-navy);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.link--danger {
+  color: var(--color-red);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

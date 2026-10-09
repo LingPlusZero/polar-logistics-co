@@ -1,0 +1,82 @@
+[
+    {
+        "id":  1,
+        "elfNumber":  "E016",
+        "elfName":  "夜櫻",
+        "filedAt":  "2026-07-14",
+        "reason":  "午休時間哼歌，而且每天都是同一首",
+        "status":  "已結案",
+        "resolution":  "已請雙方協調午休曲目，申訴人同意改聽雪橇鈴聲白噪音",
+        "handler":  "月桂"
+    },
+    {
+        "id":  2,
+        "elfNumber":  "E017",
+        "elfName":  "晨露",
+        "filedAt":  "2026-07-15",
+        "reason":  "借走訂書機之後沒有歸還（已借 3 天）",
+        "status":  "已結案",
+        "resolution":  "訂書機已尋回，位於被申訴人抽屜最底層，已歸還",
+        "handler":  "月桂"
+    },
+    {
+        "id":  3,
+        "elfNumber":  "E016",
+        "elfName":  "夜櫻",
+        "filedAt":  "2026-08-03",
+        "reason":  "回覆客訴信時使用的驚嘆號比我多",
+        "status":  "已結案",
+        "resolution":  "驚嘆號數量不屬於違規事項，已口頭提醒雙方每封信以兩個為限",
+        "handler":  "星砂"
+    },
+    {
+        "id":  4,
+        "elfNumber":  "E017",
+        "elfName":  "晨露",
+        "filedAt":  "2026-08-21",
+        "reason":  "把我的雪人造型便利貼貼歪了",
+        "status":  "已結案",
+        "resolution":  "經現場丈量，便利貼歪斜約 2 度，在合理範圍內，不予處分",
+        "handler":  "月桂"
+    },
+    {
+        "id":  5,
+        "elfNumber":  "E016",
+        "elfName":  "夜櫻",
+        "filedAt":  "2026-09-09",
+        "reason":  "喝茶時發出聲響",
+        "status":  "處理中",
+        "resolution":  null,
+        "handler":  null
+    },
+    {
+        "id":  6,
+        "elfNumber":  "E017",
+        "elfName":  "晨露",
+        "filedAt":  "2026-09-10",
+        "reason":  "對我說「早安」的語氣不夠真誠",
+        "status":  "處理中",
+        "resolution":  null,
+        "handler":  null
+    },
+    {
+        "id":  7,
+        "elfNumber":  "E016",
+        "elfName":  "夜櫻",
+        "filedAt":  "2026-09-28",
+        "reason":  "在茶水間暖爐前站太久，影響他人取暖",
+        "status":  "處理中",
+        "resolution":  null,
+        "handler":  null
+    },
+    {
+        "id":  8,
+        "elfNumber":  "E017",
+        "elfName":  "晨露",
+        "filedAt":  "2026-10-08",
+        "reason":  "在我的馬克杯旁邊放了一個一模一樣的馬克杯",
+        "status":  "處理中",
+        "resolution":  null,
+        "handler":  null
+    }
+]

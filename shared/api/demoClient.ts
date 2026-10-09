@@ -1,7 +1,8 @@
 import type { ApiClient } from './client'
-import type { AnnualStatic, Career, Department, Elf, ElfProfile } from './types'
+import type { AnnualStatic, Career, Complaint, Department, Elf, ElfProfile } from './types'
 import annualData from './demo/data/annual.json'
 import careerData from './demo/data/career.json'
+import complaintData from './demo/data/complaint.json'
 import departmentData from './demo/data/department.json'
 import elfData from './demo/data/elf.json'
 import rosterData from './demo/data/roster.json'
@@ -28,6 +29,7 @@ const departmentName = (departmentId: number | null) =>
 
 const elves = elfData as ElfProfile[]
 const rosterStore = createStore<Elf>('demo:roster', rosterData as Elf[])
+const complaintStore = createStore<Complaint>('demo:complaint', complaintData as Complaint[])
 
 const PASSWORD_KEY_PREFIX = 'demo:password:'
 
@@ -113,6 +115,75 @@ export const demoClient: ApiClient = {
     },
     async remove(id) {
       careerStore.write(careerStore.read().filter((item) => item.id !== id))
+    },
+  },
+  complaint: {
+    // 新的在前（申訴日期，同日以 id），與後端一致；分頁、篩選在這裡模擬
+    async list(query) {
+      const filtered = complaintStore
+        .read()
+        .filter((item) => query.status === null || item.status === query.status)
+        .sort((a, b) => b.filedAt.localeCompare(a.filedAt) || b.id - a.id)
+
+      return {
+        items: filtered.slice((query.page - 1) * query.perPage, query.page * query.perPage),
+        total: filtered.length,
+        page: Math.max(1, query.page),
+        perPage: query.perPage,
+        lastPage: Math.max(1, Math.ceil(filtered.length / query.perPage)),
+      }
+    },
+    async close(id, resolution) {
+      const items = complaintStore.read()
+      const current = items.find((item) => item.id === id)
+
+      if (!current) {
+        throw new ApiError(404, '找不到這筆申訴')
+      }
+
+      if (current.status === '已結案') {
+        throw new ApiError(409, '這筆申訴已經結案')
+      }
+
+      if (resolution.trim() === '') {
+        throw new ApiError(422, '後續處理說明必填', { resolution: ['後續處理說明必填'] })
+      }
+
+      // 處理人由登入者帶入
+      const closed: Complaint = {
+        ...current,
+        status: '已結案',
+        resolution: resolution.trim(),
+        handler: getStoredProfile()?.name ?? null,
+      }
+      complaintStore.write(items.map((item) => (item.id === id ? closed : item)))
+      return closed
+    },
+    async create(input) {
+      const profile = getStoredProfile()
+      const target = rosterStore.read().find((item) => item.number === input.elfNumber)
+
+      if (!target) {
+        throw new ApiError(422, '找不到這個精靈編號', { elfNumber: ['找不到這個精靈編號'] })
+      }
+
+      if (target.number === profile?.number) {
+        throw new ApiError(422, '不能申訴自己', { elfNumber: ['不能申訴自己'] })
+      }
+
+      const items = complaintStore.read()
+      const created: Complaint = {
+        id: Math.max(0, ...items.map((item) => item.id)) + 1,
+        elfNumber: target.number,
+        elfName: target.name,
+        filedAt: new Date().toLocaleDateString('sv-SE'),
+        reason: input.reason.trim(),
+        status: '處理中',
+        resolution: null,
+        handler: null,
+      }
+      complaintStore.write([...items, created])
+      return { id: created.id, elfNumber: created.elfNumber, elfName: created.elfName }
     },
   },
   department: {

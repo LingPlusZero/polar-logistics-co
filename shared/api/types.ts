@@ -77,6 +77,7 @@ export interface Page<T> {
 export type Permission =
   | 'leave.apply'
   | 'leave.review'
+  | 'complaint.file'
   | 'password.change'
   | 'elf.roster'
   | 'elf.leave'
@@ -109,4 +110,40 @@ export interface AnnualStatic {
   completeRate: number
   feedbackRate: number
   note: string | null
+}
+
+export type ComplaintStatus = '處理中' | '已結案'
+
+// 人力資源部看的申訴紀錄；elfNumber 是被申訴人，申訴人只存不回傳
+export interface Complaint {
+  id: number
+  elfNumber: string
+  elfName: string
+  // YYYY-MM-DD
+  filedAt: string
+  reason: string
+  status: ComplaintStatus
+  // 結案時的後續處理說明
+  resolution: string | null
+  // 處理人姓名，結案時由系統帶入
+  handler: string | null
+}
+
+// 我要申訴：申訴日期取當天、狀態預設處理中，申訴人是登入者，所以只送這兩個
+export interface ComplaintInput {
+  elfNumber: string
+  reason: string
+}
+
+// 送出後回傳給申訴人的確認資訊，不含整筆紀錄
+export interface ComplaintReceipt {
+  id: number
+  elfNumber: string
+  elfName: string
+}
+
+export interface ComplaintListQuery {
+  status: ComplaintStatus | null
+  page: number
+  perPage: number
 }

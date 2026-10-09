@@ -24,6 +24,12 @@ export const MENU: (MenuItem | MenuGroup)[] = [
     ],
   },
   {
+    label: '我要申訴',
+    path: '/complaint',
+    permission: 'complaint.file',
+    component: () => import('../views/ComplaintFileView.vue'),
+  },
+  {
     label: '精靈管理',
     children: [
       {
@@ -33,7 +39,12 @@ export const MENU: (MenuItem | MenuGroup)[] = [
         component: () => import('../views/ElfRosterView.vue'),
       },
       { label: '精靈請假紀錄', path: '/elves/leave-records', permission: 'elf.leave' },
-      { label: '精靈被申訴紀錄', path: '/elves/complaints', permission: 'elf.complaint' },
+      {
+        label: '精靈被申訴紀錄',
+        path: '/elves/complaints',
+        permission: 'elf.complaint',
+        component: () => import('../views/ComplaintRecordsView.vue'),
+      },
       { label: '精靈出勤紀錄', path: '/elves/attendance', permission: 'elf.attendance' },
     ],
   },

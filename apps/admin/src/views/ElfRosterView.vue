@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ApiError, api } from '@shared/api'
 import type { Department, Elf, ElfSortKey, SortOrder } from '@shared/api'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import ElfFormDialog from '../components/ElfFormDialog.vue'
+import PaginationBar from '../components/PaginationBar.vue'
 import { formatSeniority } from '../utils/seniority'
 
 const PER_PAGE = 10
@@ -112,29 +113,6 @@ const goToPage = (target: number) => {
   load()
 }
 
-// 頁碼最多顯示目前頁前後各 2 頁，頭尾頁固定顯示，中間省略
-const pageButtons = computed(() => {
-  const pages = new Set([1, lastPage.value])
-
-  for (let i = page.value - 2; i <= page.value + 2; i++) {
-    if (i >= 1 && i <= lastPage.value) {
-      pages.add(i)
-    }
-  }
-
-  const sorted = [...pages].sort((a, b) => a - b)
-  const result: (number | null)[] = []
-
-  sorted.forEach((value, index) => {
-    if (index > 0 && value - sorted[index - 1] > 1) {
-      result.push(null)
-    }
-    result.push(value)
-  })
-
-  return result
-})
-
 const statusClass = (status: Elf['status']) =>
   status === '正常' ? 'status--normal' : status === '請假' ? 'status--leave' : 'status--missing'
 
@@ -223,7 +201,7 @@ const confirmDelete = async () => {
       </label>
     </form>
 
-    <p v-if="notice" class="roster__notice" role="status">{{ notice }}</p>
+    <p v-if="notice" class="notice" role="status">{{ notice }}</p>
     <p v-if="loadError" class="field__error" role="alert">{{ loadError }}</p>
 
     <div class="table-wrap" :aria-busy="isLoading">
@@ -271,36 +249,13 @@ const confirmDelete = async () => {
             </td>
           </tr>
           <tr v-if="!isLoading && elves.length === 0">
-            <td colspan="9" class="roster__empty">沒有符合條件的精靈</td>
+            <td colspan="9" class="table-empty">沒有符合條件的精靈</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <nav v-if="total > 0" class="pager" aria-label="分頁">
-      <p class="pager__total">共 {{ total }} 筆，第 {{ page }} / {{ lastPage }} 頁</p>
-      <div class="pager__buttons">
-        <button type="button" class="button" :disabled="page <= 1" @click="goToPage(page - 1)">
-          上一頁
-        </button>
-        <template v-for="(item, index) in pageButtons" :key="index">
-          <span v-if="item === null" class="pager__gap" aria-hidden="true">…</span>
-          <button
-            v-else
-            type="button"
-            class="button pager__page"
-            :class="{ 'button--primary': item === page }"
-            :aria-current="item === page ? 'page' : undefined"
-            @click="goToPage(item)"
-          >
-            {{ item }}
-          </button>
-        </template>
-        <button type="button" class="button" :disabled="page >= lastPage" @click="goToPage(page + 1)">
-          下一頁
-        </button>
-      </div>
-    </nav>
+    <PaginationBar :page="page" :last-page="lastPage" :total="total" @change="goToPage" />
 
     <ElfFormDialog
       :open="isFormOpen"
@@ -348,68 +303,6 @@ const confirmDelete = async () => {
   font-size: 0.875rem;
 }
 
-.roster__notice {
-  margin-top: 1rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  background: var(--color-ice-dark);
-  border-left: 3px solid var(--color-navy);
-}
-
-.roster__empty {
-  padding: 1.5rem 0;
-  text-align: center;
-  color: var(--color-text-muted);
-}
-
-.table-wrap {
-  margin-top: 1rem;
-  overflow-x: auto;
-  background: #fff;
-  border: 1px solid var(--color-ice-dark);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-  white-space: nowrap;
-}
-
-/* 換頁、排序時保留舊資料並淡化，避免畫面閃爍 */
-.table--loading {
-  opacity: 0.5;
-}
-
-.table th,
-.table td {
-  padding: 0.625rem 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid var(--color-ice-dark);
-}
-
-.table thead th {
-  font-weight: 700;
-  background: var(--color-ice);
-}
-
-.table__name {
-  font-weight: 700;
-}
-
-/* 備註可能很長，限制寬度並換行 */
-.table__note {
-  min-width: 10rem;
-  max-width: 18rem;
-  white-space: normal;
-  color: var(--color-text-muted);
-}
-
-.table__actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
 .sort {
   padding: 0;
   font: inherit;
@@ -424,14 +317,6 @@ const confirmDelete = async () => {
   text-decoration: underline;
 }
 
-/* 狀態除了顏色，文字本身也標示 */
-.status {
-  display: inline-block;
-  padding: 0.0625rem 0.5rem;
-  font-size: 0.75rem;
-  border: 1px solid currentcolor;
-}
-
 .status--normal {
   color: var(--color-navy);
 }
@@ -444,59 +329,6 @@ const confirmDelete = async () => {
 .status--missing {
   font-weight: 700;
   color: var(--color-red);
-}
-
-.link {
-  padding: 0;
-  font: inherit;
-  color: var(--color-navy);
-  text-decoration: underline;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.link--danger {
-  color: var(--color-red);
-}
-
-.pager {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
-  margin-top: 1rem;
-}
-
-.pager__total {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-}
-
-.pager__buttons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.pager__buttons .button {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.875rem;
-}
-
-.pager__gap {
-  padding: 0 0.25rem;
-  color: var(--color-text-muted);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
 }
 
 @media (min-width: 48em) {
