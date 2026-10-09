@@ -69,3 +69,12 @@
 - 後端 `RequireSecureConnection` middleware：正式環境（`APP_ENV=production`）收到非 HTTPS 的登入、登出、me 請求回 403；開發環境不強制
 - 不在前端自行雜湊密碼來取代 HTTPS：雜湊值等同密碼，被攔截一樣能重放登入；正式環境需改用正式憑證並加上 HSTS
 - 重置憑證：`docker compose down -v` 會一併清除，下次啟動重新產生
+
+## 錯誤訊息不外洩（資安）
+- `APP_DEBUG` 預設 `false`（`.env.example`、本機 `.env`）：錯誤回應只有 `{"message":"Server Error"}`，堆疊、SQL、檔案路徑只寫進 log（`docker compose logs php`）
+- 正式環境（`APP_ENV=production`）`AppServiceProvider` 會再強制 `app.debug=false`，即使 `.env` 誤設為 true
+- `bootstrap/app.php` 把 API 的 404、405 改成通用訊息（「找不到資料」「不支援的請求方法」）：框架預設的 404 訊息會帶出 model 類別名稱（例如 `No query results for model [App\Models\Elf]`）
+- PHP：`docker/php/conf.d/security.ini`（掛載成 `zz-security.ini`）關閉 `display_errors`、`expose_php`，錯誤寫到 stderr
+- nginx：`server_tokens off`（不透露版本），`fastcgi_hide_header X-Powered-By`
+- 前端 `httpClient`：5xx 一律顯示「伺服器發生錯誤，請稍後再試」，沒有訊息時顯示「操作失敗，請稍後再試」，不把狀態碼、請求路徑顯示給使用者
+- 測試：`tests/Feature/ErrorResponseTest.php`（404／405／500／SQL 錯誤不含類別名稱、路徑、堆疊與 SQL）

@@ -24,7 +24,9 @@
 - workflow：`.github/workflows/deploy-pages.yml`，push 到 `main` 或手動觸發（workflow_dispatch）
 - 建置腳本：`scripts/build-pages.sh`，依序建置各前端並輸出到 `_site/`
   - 官網在站台根目錄（`/<倉庫名稱>/`）
-  - 精靈管理系統預計在 `/<倉庫名稱>/admin/`，目前在腳本中註解，完成後開啟，並同步開啟官網頁尾「員工專區」（`SiteFooter.vue` 的 `IS_ADMIN_ENABLED`）
+  - 精靈管理系統在 `/<倉庫名稱>/admin/`（腳本的 `build admin "/admin"`），官網頁尾「員工專區」連過去（`SiteFooter.vue` 的 `IS_ADMIN_ENABLED` 已開啟，網址由 `VITE_ADMIN_URL` 帶入）
+  - 管理系統的 `index.html` 帶 `noindex, nofollow`，不讓搜尋引擎收錄
+  - Demo 的快照（`shared/api/demo/data/*.json`）與後端資料需保持一致，部署前可比對 `Elf::permissions()` 與 `elf.json`、ElfSeeder 與 `roster.json`
 - 子路徑由環境變數 `VITE_BASE` 決定（workflow 以倉庫名稱帶入，優先於 `.env.demo`），倉庫改名不需改檔案
 - 每次建置使用 `npm ci`，依 `package-lock.json` 安裝
 - 路由使用 hash history，重新整理不會 404

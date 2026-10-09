@@ -6,7 +6,7 @@
 部署到 GitHub Pages 的靜態 Demo，資料僅存在瀏覽器。
 
 - 官網：https://lingpluszero.github.io/polar-logistics-co/
-- 精靈管理系統：（建置中）
+- 精靈管理系統：https://lingpluszero.github.io/polar-logistics-co/admin/（Demo 帳號 E001–E022，密碼輸入自己的帳號；任何操作只存在你的瀏覽器）
 
 首次啟用需到倉庫 Settings → Pages，Source 選「GitHub Actions」；之後 push 到 `main` 會自動部署，細節見 `docs/demo-strategy.md`。
 

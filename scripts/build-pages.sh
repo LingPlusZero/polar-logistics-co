@@ -26,5 +26,5 @@ build() {
 
 build website ""
 
-# 精靈管理系統完成後取消註解，並同步開啟官網頁尾「員工專區」（SiteFooter.vue 的 IS_ADMIN_ENABLED）
-# build admin "/admin"
+# 精靈管理系統放在 /admin/，官網頁尾「員工專區」連過去（SiteFooter.vue 的 IS_ADMIN_ENABLED）
+build admin "/admin"

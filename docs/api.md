@@ -12,6 +12,7 @@
 - CSRF：純 API、無 session/cookie，不適用；之後若改用 cookie 驗證需重新評估
 - 流量：`throttleApi()`，每個 IP 每分鐘 60 次
 - 權限：career 的寫入（POST/PUT/DELETE）需登入且有 `career.manage`（人力資源部）：路由掛 `AuthenticateElf` + `RequirePermission:career.manage`，`CareerRequest::authorize` 再檢查一次；GET 公開（官網使用）。新增需權限的 api 照這個模式
+- 錯誤訊息：不外洩內部細節，見 architecture「錯誤訊息不外洩」
 - 登入：權杖只存雜湊；登入端點獨立限流（每 IP 每分鐘 10 次）；純 Bearer 權杖、不用 cookie，不受 CSRF 影響
 
 ## 清單
