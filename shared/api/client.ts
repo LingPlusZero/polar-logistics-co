@@ -1,4 +1,16 @@
-import type { AnnualStatic, AuthSession, Career, CareerInput, Department, ElfProfile } from './types'
+import type {
+  AnnualStatic,
+  AuthSession,
+  Career,
+  CareerInput,
+  Department,
+  Elf,
+  ElfCreateInput,
+  ElfListQuery,
+  ElfProfile,
+  ElfUpdateInput,
+  Page,
+} from './types'
 
 // 元件只認識這個介面，不知道資料來自 Laravel API 還是 JSON 快照
 export interface ApiClient {
@@ -16,6 +28,12 @@ export interface ApiClient {
   }
   department: {
     list(): Promise<Department[]>
+  }
+  elf: {
+    list(query: ElfListQuery): Promise<Page<Elf>>
+    create(input: ElfCreateInput): Promise<Elf>
+    update(id: number, input: ElfUpdateInput): Promise<Elf>
+    remove(id: number): Promise<void>
   }
   statics: {
     annual(): Promise<AnnualStatic[]>

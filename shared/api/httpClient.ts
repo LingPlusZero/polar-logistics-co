@@ -45,6 +45,29 @@ export const httpClient: ApiClient = {
   department: {
     list: () => request('GET', '/department'),
   },
+  elf: {
+    list: (query) => {
+      const params = new URLSearchParams({
+        sort: query.sort,
+        order: query.order,
+        page: String(query.page),
+        perPage: String(query.perPage),
+      })
+
+      if (query.search.trim() !== '') {
+        params.set('search', query.search.trim())
+      }
+
+      if (query.departmentId !== null) {
+        params.set('departmentId', String(query.departmentId))
+      }
+
+      return request('GET', `/elf?${params}`)
+    },
+    create: (input) => request('POST', '/elf', input),
+    update: (id, input) => request('PUT', `/elf/${id}`, input),
+    remove: (id) => request('DELETE', `/elf/${id}`),
+  },
   statics: {
     annual: () => request('GET', '/statics/annual?limit=10'),
   },

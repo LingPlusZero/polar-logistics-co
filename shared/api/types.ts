@@ -25,6 +25,54 @@ export type CareerInput = Omit<Career, 'id' | 'department'>
 // 精靈職級，順序即晉升順序（docs/brand.md）
 export type ElfRank = '實習精靈' | '正式精靈' | '資深精靈' | '部長' | '副聖誕老人'
 
+export type ElfStatus = '正常' | '請假' | '可能失蹤'
+
+// 精靈名冊的一列；年資由 hiredAt 計算，不由後端回傳
+export interface Elf {
+  id: number
+  number: string
+  name: string
+  departmentId: number
+  department: string
+  rank: ElfRank
+  // YYYY-MM-DD
+  hiredAt: string
+  status: ElfStatus
+  note: string | null
+}
+
+// 「請假」由請假單決定（有申請且正值假期），不能手動設定
+export type EditableElfStatus = Exclude<ElfStatus, '請假'>
+
+// 精靈編號由後端自動產生，新增時不送；編輯時到職日不可改，後端會忽略
+export type ElfCreateInput = Omit<Elf, 'id' | 'department' | 'number' | 'status'> & { status: EditableElfStatus }
+// 請假中的精靈不送 status（狀態由請假單決定）
+export type ElfUpdateInput = Omit<ElfCreateInput, 'hiredAt' | 'status'> & {
+  status?: EditableElfStatus
+}
+
+export type ElfSortKey = 'number' | 'department' | 'seniority'
+export type SortOrder = 'asc' | 'desc'
+
+// 搜尋、篩選、排序、分頁都由後端處理（Demo 模式由前端模擬）
+export interface ElfListQuery {
+  // 精靈編號或姓名
+  search: string
+  departmentId: number | null
+  sort: ElfSortKey
+  order: SortOrder
+  page: number
+  perPage: number
+}
+
+export interface Page<T> {
+  items: T[]
+  total: number
+  page: number
+  perPage: number
+  lastPage: number
+}
+
 // 選單與路由依權限鍵判斷是否顯示，權限由後端依部門與職級給定
 export type Permission =
   | 'leave.apply'

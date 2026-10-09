@@ -1,9 +1,10 @@
 import type { ApiClient } from './client'
-import type { AnnualStatic, Career, Department, ElfProfile } from './types'
+import type { AnnualStatic, Career, Department, Elf, ElfProfile } from './types'
 import annualData from './demo/data/annual.json'
 import careerData from './demo/data/career.json'
 import departmentData from './demo/data/department.json'
 import elfData from './demo/data/elf.json'
+import rosterData from './demo/data/roster.json'
 import { ApiError } from './errors'
 import { PASSWORD_MIN_LENGTH, isValidPassword } from './password'
 import { getStoredProfile, getToken } from './session'
@@ -26,6 +27,7 @@ const departmentName = (departmentId: number | null) =>
   departments.find((department) => department.id === departmentId)?.name ?? null
 
 const elves = elfData as ElfProfile[]
+const rosterStore = createStore<Elf>('demo:roster', rosterData as Elf[])
 
 const PASSWORD_KEY_PREFIX = 'demo:password:'
 
@@ -116,6 +118,92 @@ export const demoClient: ApiClient = {
   department: {
     async list() {
       return departments
+    },
+  },
+  elf: {
+    // Demo 沒有後端，搜尋、篩選、排序、分頁在這裡模擬，規則與 ElfController::index 一致
+    async list(query) {
+      const text = query.search.trim().toLowerCase()
+      const direction = query.order === 'asc' ? 1 : -1
+
+      const filtered = rosterStore
+        .read()
+        .filter(
+          (elf) =>
+            (query.departmentId === null || elf.departmentId === query.departmentId) &&
+            (text === '' ||
+              elf.number.toLowerCase().includes(text) ||
+              elf.name.toLowerCase().includes(text)),
+        )
+
+      const byNumber = (a: Elf, b: Elf) => a.number.localeCompare(b.number)
+
+      filtered.sort((a, b) => {
+        if (query.sort === 'department') {
+          return direction * (a.departmentId - b.departmentId) || byNumber(a, b)
+        }
+
+        if (query.sort === 'seniority') {
+          // 年資越高＝到職日越早，方向與到職日相反
+          return -direction * a.hiredAt.localeCompare(b.hiredAt) || byNumber(a, b)
+        }
+
+        return direction * byNumber(a, b)
+      })
+
+      const lastPage = Math.max(1, Math.ceil(filtered.length / query.perPage))
+      // 與後端一致：不修正超出範圍的頁數，回傳空頁
+      const page = Math.max(1, query.page)
+
+      return {
+        items: filtered.slice((page - 1) * query.perPage, page * query.perPage),
+        total: filtered.length,
+        page,
+        perPage: query.perPage,
+        lastPage,
+      }
+    },
+    async create(input) {
+      const items = rosterStore.read()
+
+      // 與後端 Elf::nextNumber 一致：E 開頭編號的最大數字 + 1，至少三位數
+      const maxNumber = Math.max(0, ...items.map((item) => Number(item.number.slice(1)) || 0))
+
+      const created: Elf = {
+        ...input,
+        number: `E${String(maxNumber + 1).padStart(3, '0')}`,
+        id: Math.max(0, ...items.map((item) => item.id)) + 1,
+        department: departmentName(input.departmentId) ?? '',
+      }
+      rosterStore.write([...items, created])
+      return created
+    },
+    async update(id, input) {
+      const current = rosterStore.read().find((item) => item.id === id)
+
+      if (!current) {
+        throw new ApiError(404, '找不到這名精靈')
+      }
+
+      // 精靈編號與到職日不可修改，沿用原值
+      const updated: Elf = {
+        ...input,
+        id,
+        number: current.number,
+        hiredAt: current.hiredAt,
+        // 請假狀態由請假單決定，不能手動改
+        status: current.status === '請假' ? '請假' : (input.status ?? current.status),
+        department: departmentName(input.departmentId) ?? '',
+      }
+      rosterStore.write(rosterStore.read().map((item) => (item.id === id ? updated : item)))
+      return updated
+    },
+    async remove(id) {
+      if (getStoredProfile()?.id === id) {
+        throw new ApiError(422, '不能刪除自己')
+      }
+
+      rosterStore.write(rosterStore.read().filter((item) => item.id !== id))
     },
   },
   statics: {
