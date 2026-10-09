@@ -140,6 +140,31 @@ class ComplaintTest extends TestCase
         $this->getJson('/api/complaint?status=亂填')->assertUnprocessable();
     }
 
+    public function test_搜尋_部門_日期篩選(): void
+    {
+        $this->worker->update(['name' => '雪花']);
+        $this->createComplaint(['filed_at' => '2026-10-01', 'reason' => '舊的']);
+        $this->createComplaint(['filed_at' => '2026-10-08', 'reason' => '新的', 'elf_id' => $this->hr->id]);
+
+        $this->withToken('test-token-T001');
+        // 搜尋與部門都針對被申訴人
+        $this->getJson('/api/complaint?search=雪')->assertJsonPath('total', 1)->assertJsonPath('items.0.reason', '舊的');
+        $this->getJson('/api/complaint?search=t00')->assertJsonPath('total', 2);
+        $this->getJson('/api/complaint?search=%25')->assertJsonPath('total', 0);
+
+        $transport = Department::where('name', '運輸部')->value('id');
+        $this->getJson("/api/complaint?departmentId={$transport}")->assertJsonPath('total', 1);
+
+        // 日期含起迄當天，可與其他條件一起用
+        $this->getJson('/api/complaint?dateFrom=2026-10-02')->assertJsonPath('total', 1)->assertJsonPath('items.0.reason', '新的');
+        $this->getJson('/api/complaint?dateFrom=2026-10-01&dateTo=2026-10-01')->assertJsonPath('total', 1);
+        $this->getJson('/api/complaint?dateFrom=2026-10-01&search=T001')->assertJsonPath('total', 1);
+
+        $this->getJson('/api/complaint?dateFrom=2026-10-08&dateTo=2026-10-01')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['dateTo']);
+    }
+
     public function test_結案需要後續處理說明_處理人自動帶入(): void
     {
         $complaint = $this->createComplaint();

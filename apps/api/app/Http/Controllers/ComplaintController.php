@@ -9,6 +9,7 @@ use App\Http\Requests\ComplaintRequest;
 use App\Http\Resources\ComplaintResource;
 use App\Models\Complaint;
 use App\Models\Elf;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Response;
 
 class ComplaintController extends Controller
@@ -19,6 +20,33 @@ class ComplaintController extends Controller
 
         if ($status = $request->validated('status')) {
             $query->where('status', $status);
+        }
+
+        $search = $request->validated('search');
+        $departmentId = $request->validated('departmentId');
+
+        // 搜尋與部門都針對被申訴人
+        if ($search || $departmentId) {
+            $query->whereHas('elf', function ($elf) use ($search, $departmentId) {
+                if ($search) {
+                    // 搜尋字串中的 % _ 要跳脫，避免使用者輸入變成萬用字元
+                    $like = '%'.addcslashes($search, '\\%_').'%';
+                    $elf->where(fn ($q) => $q->where('number', 'like', $like)->orWhere('name', 'like', $like));
+                }
+
+                if ($departmentId) {
+                    $elf->where('department_id', $departmentId);
+                }
+            });
+        }
+
+        // 起迄含當天；迄日用「小於隔天」比對，不論欄位是否帶時間都正確
+        if ($from = $request->validated('dateFrom')) {
+            $query->where('filed_at', '>=', $from);
+        }
+
+        if ($to = $request->validated('dateTo')) {
+            $query->where('filed_at', '<', CarbonImmutable::parse($to)->addDay()->toDateString());
         }
 
         // 新的在前；同一天以 id 排序讓分頁順序穩定
