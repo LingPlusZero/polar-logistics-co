@@ -68,7 +68,12 @@ export const MENU: (MenuItem | MenuGroup)[] = [
       },
     ],
   },
-  { label: '動力單位管理', path: '/reindeer', permission: 'reindeer.manage' },
+  {
+    label: '動力單位管理',
+    path: '/reindeer',
+    permission: 'reindeer.manage',
+    component: () => import('../views/ReindeerView.vue'),
+  },
   { label: '職缺管理', path: '/career', permission: 'career.manage' },
 ]
 

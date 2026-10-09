@@ -172,6 +172,15 @@ export const httpClient: ApiClient = {
     update: (id, input) => request('PUT', `/elf/${id}`, input),
     remove: (id) => request('DELETE', `/elf/${id}`),
   },
+  reindeer: {
+    list: (query) => request('GET', `/reindeer?sort=${query.sort}&order=${query.order}`),
+    create: (input) => request('POST', '/reindeer', input),
+    update: (id, input) => request('PUT', `/reindeer/${id}`, input),
+    remove: (id) => request('DELETE', `/reindeer/${id}`),
+    caretakers: () => request('GET', '/reindeer/caretakers'),
+    mine: () => request('GET', '/reindeer/mine'),
+    leaves: (id) => request('GET', `/reindeer/${id}/leave`),
+  },
   statics: {
     annual: () => request('GET', '/statics/annual?limit=10'),
   },

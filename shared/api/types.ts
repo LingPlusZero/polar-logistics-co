@@ -190,6 +190,9 @@ export type LeaveStatus = '審核中' | '核准' | '駁回'
 
 // 請假單；elfNumber 是申請人
 export interface Leave {
+  // 照護專員代馴鹿請假時為該馴鹿，替自己請假為 null
+  reindeerNumber: string | null
+  reindeerName: string | null
   id: number
   elfNumber: string
   elfName: string
@@ -209,6 +212,8 @@ export interface Leave {
 
 // 申請時只送假別與起日，迄日由假別天數算出，申請日為當天
 export interface LeaveInput {
+  // 代請假的馴鹿 id；省略代表替自己請假（只有該馴鹿的照護專員能代請）
+  reindeerId?: number | null
   leaveType: LeaveType
   startDate: string
 }
@@ -230,4 +235,41 @@ export interface LeaveRecordQuery extends LeaveListQuery {
   departmentId: number | null
   dateFrom: string | null
   dateTo: string | null
+}
+
+// 動力單位（馴鹿）；年資由 hiredAt 計算，不由後端回傳
+export interface Reindeer {
+  id: number
+  // 兩位數以上，例如 01，由系統自動產生
+  number: string
+  name: string
+  // YYYY-MM-DD
+  hiredAt: string
+  lastMaintainedAt: string
+  // 上次保養後間隔 3 個月，由後端算出，不可修改
+  nextMaintenanceAt: string
+  caretakerId: number | null
+  // 照護專員姓名
+  caretaker: string | null
+  note: string | null
+}
+
+// 編號由系統產生；到職日只能在新增時填寫，編輯時後端會忽略
+export type ReindeerCreateInput = Pick<Reindeer, 'name' | 'hiredAt' | 'lastMaintainedAt' | 'note'> & {
+  caretakerId: number
+}
+export type ReindeerUpdateInput = Omit<ReindeerCreateInput, 'hiredAt'>
+
+export type ReindeerSortKey = 'number' | 'seniority'
+
+export interface ReindeerListQuery {
+  sort: ReindeerSortKey
+  order: SortOrder
+}
+
+// 照護專員選項（馴鹿管理部的精靈）／登入者照護的馴鹿，只需要辨識用的欄位
+export interface PersonOption {
+  id: number
+  number: string
+  name: string
 }

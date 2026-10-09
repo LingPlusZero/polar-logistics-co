@@ -7,7 +7,7 @@ import {
   leaveEndDate,
   touchesPeakSeason,
 } from '@shared/api'
-import type { Leave, LeaveStatus, LeaveType } from '@shared/api'
+import type { Leave, LeaveStatus, LeaveType, PersonOption } from '@shared/api'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import PaginationBar from '../components/PaginationBar.vue'
 
@@ -16,6 +16,10 @@ const PER_PAGE = 10
 // 本地日期 YYYY-MM-DD；起日不可早於今天
 const today = new Date().toLocaleDateString('sv-SE')
 const isPeakSeasonNow = new Date().getMonth() === 11
+
+// 照護專員可以替自己照護的馴鹿請假；null＝替自己請假
+const myReindeer = ref<PersonOption[]>([])
+const reindeerId = ref<number | null>(null)
 
 const form = reactive<{ leaveType: LeaveType; startDate: string }>({
   leaveType: LEAVE_TYPES[0].type,
@@ -92,7 +96,11 @@ const load = async () => {
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  // 沒有照顧馴鹿（或取不到）就不顯示請假對象
+  myReindeer.value = await api.reindeer.mine().catch(() => [])
+  await load()
+})
 
 watch([statusFilter, dateFrom, dateTo], () => {
   page.value = 1
@@ -116,7 +124,11 @@ const submit = async () => {
   isSubmitting.value = true
 
   try {
-    const leave = await api.leave.apply({ leaveType: form.leaveType, startDate: form.startDate })
+    const leave = await api.leave.apply({
+      leaveType: form.leaveType,
+      startDate: form.startDate,
+      reindeerId: reindeerId.value,
+    })
 
     notice.value =
       leave.status === '核准'
@@ -138,6 +150,9 @@ const submit = async () => {
   }
 }
 
+const leaveSubject = (leave: Leave) =>
+  leave.reindeerName ? `馴鹿 ${leave.reindeerName}（${leave.reindeerNumber}）` : '自己'
+
 const statusClass = (status: LeaveStatus) =>
   status === '核准' ? 'status--approved' : status === '駁回' ? 'status--rejected' : 'status--pending'
 </script>
@@ -151,6 +166,19 @@ const statusClass = (status: LeaveStatus) =>
     <p v-if="notice" class="notice apply__notice" role="status">{{ notice }}</p>
 
     <form class="apply__form" novalidate @submit.prevent="submit">
+      <!-- 照護專員才有這個選項：替自己請假，或代自己照護的馴鹿請假 -->
+      <fieldset v-if="myReindeer.length > 0" class="apply__target" :disabled="isPeakSeasonNow">
+        <legend class="field__label">請假對象</legend>
+        <label class="apply__radio">
+          <input v-model="reindeerId" type="radio" name="leave-target" :value="null" />
+          自己
+        </label>
+        <label v-for="item in myReindeer" :key="item.id" class="apply__radio">
+          <input v-model="reindeerId" type="radio" name="leave-target" :value="item.id" />
+          馴鹿 {{ item.name }}（{{ item.number }}）
+        </label>
+      </fieldset>
+
       <label class="field apply__field">
         <span class="field__label">假別</span>
         <select v-model="form.leaveType" class="field__input" :disabled="isPeakSeasonNow">
@@ -230,6 +258,7 @@ const statusClass = (status: LeaveStatus) =>
       <table class="table" :class="{ 'table--loading': isLoading }">
         <thead>
           <tr>
+            <th scope="col">請假對象</th>
             <th scope="col">假別</th>
             <th scope="col">請假期間</th>
             <th scope="col">申請日期</th>
@@ -241,6 +270,7 @@ const statusClass = (status: LeaveStatus) =>
         </thead>
         <tbody>
           <tr v-for="leave in leaves" :key="leave.id">
+            <td>{{ leaveSubject(leave) }}</td>
             <td>{{ leave.leaveType }}</td>
             <td>
               {{ leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} ～ ${leave.endDate}` }}（{{
@@ -257,7 +287,7 @@ const statusClass = (status: LeaveStatus) =>
             <td class="table__note">{{ leave.rejectReason ?? '' }}</td>
           </tr>
           <tr v-if="!isLoading && leaves.length === 0">
-            <td colspan="7" class="table-empty">還沒有請假單</td>
+            <td colspan="8" class="table-empty">還沒有請假單</td>
           </tr>
         </tbody>
       </table>
@@ -303,6 +333,28 @@ const statusClass = (status: LeaveStatus) =>
 .apply__submit {
   justify-self: start;
   padding: 0.625rem 1.25rem;
+}
+
+/* 請假對象：單選按鈕橫向排列，獨佔一整列 */
+.apply__target {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.apply__target .field__label {
+  width: 100%;
+  padding: 0;
+}
+
+.apply__radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .apply__messages {

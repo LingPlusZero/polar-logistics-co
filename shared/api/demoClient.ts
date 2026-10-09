@@ -1,16 +1,18 @@
 import type { ApiClient } from './client'
-import type { AnnualStatic, Attendance, Career, Complaint, Department, Elf, ElfProfile, Leave, LeaveListQuery, Page } from './types'
+import type { AnnualStatic, Attendance, Career, Complaint, Department, Elf, ElfProfile, Leave, LeaveListQuery, Page, PersonOption, Reindeer } from './types'
 import annualData from './demo/data/annual.json'
 import careerData from './demo/data/career.json'
 import complaintData from './demo/data/complaint.json'
 import departmentData from './demo/data/department.json'
 import elfData from './demo/data/elf.json'
 import leaveData from './demo/data/leave.json'
+import reindeerData from './demo/data/reindeer.json'
 import rosterData from './demo/data/roster.json'
 import { generateAttendance } from './demo/attendance'
 import { ApiError } from './errors'
 import { addDays, leaveDays, leaveEndDate, PEAK_SEASON_MESSAGE, touchesPeakSeason } from './leave'
 import { PASSWORD_MIN_LENGTH, isValidPassword } from './password'
+import { nextMaintenanceDate } from './reindeer'
 import { getStoredProfile, getToken } from './session'
 
 // 本地日期 YYYY-MM-DD
@@ -53,6 +55,7 @@ const withLastAttended = (elf: StoredElf): Elf => {
     .read()
     .some(
       (leave) =>
+        !leave.reindeerNumber &&
         leave.elfNumber === elf.number &&
         leave.status === '核准' &&
         leave.startDate <= today &&
@@ -77,6 +80,9 @@ const complaintStore = createStore<Complaint>('demo:complaint', complaintSeed)
 
 // 預設假單的日期以「距今幾天前」存（負數為未來），載入時換算成日期；與 LeaveRequestSeeder 一致
 type LeaveSeed = Pick<Leave, 'id' | 'elfNumber' | 'elfName' | 'leaveType' | 'rejectReason'> & {
+  // 照護專員代馴鹿請假的假單才有
+  reindeerNumber?: string
+  reindeerName?: string
   startAgo: number
   appliedAgo: number
   reviewer: string | null
@@ -92,6 +98,8 @@ const leaveSeed: Leave[] = (leaveData as LeaveSeed[]).map((item) => {
     id: item.id,
     elfNumber: item.elfNumber,
     elfName: item.elfName,
+    reindeerNumber: item.reindeerNumber ?? null,
+    reindeerName: item.reindeerName ?? null,
     leaveType: item.leaveType,
     days: leaveDays(item.leaveType),
     startDate,
@@ -104,6 +112,41 @@ const leaveSeed: Leave[] = (leaveData as LeaveSeed[]).map((item) => {
   }
 })
 const leaveStore = createStore<Leave>('demo:leave', leaveSeed)
+
+// 動力單位：預設資料的上次保養日以「距今幾天前」存，載入時換算成日期；與 ReindeerSeeder 一致
+type ReindeerSeed = Pick<Reindeer, 'id' | 'number' | 'name' | 'hiredAt' | 'note'> & {
+  maintainedAgo: number
+  caretakerNumber: string
+}
+
+// 寫入只存編號之外的原始欄位；下次保養日期與照護專員姓名輸出時才算（withReindeerDerived）
+type StoredReindeer = Omit<Reindeer, 'nextMaintenanceAt' | 'caretaker'>
+
+const reindeerSeed: StoredReindeer[] = (reindeerData as ReindeerSeed[]).map((item) => ({
+  id: item.id,
+  number: item.number,
+  name: item.name,
+  hiredAt: item.hiredAt,
+  lastMaintainedAt: daysFromToday(item.maintainedAgo),
+  caretakerId: elves.find((elf) => elf.number === item.caretakerNumber)?.id ?? null,
+  note: item.note,
+}))
+const reindeerStore = createStore<StoredReindeer>('demo:reindeer', reindeerSeed)
+
+const withReindeerDerived = (item: StoredReindeer): Reindeer => ({
+  ...item,
+  nextMaintenanceAt: nextMaintenanceDate(item.lastMaintainedAt),
+  caretaker: elves.find((elf) => elf.id === item.caretakerId)?.name ?? null,
+})
+
+// 照護專員必須是馴鹿管理部的精靈（與後端 ReindeerRequest 一致）
+const CARETAKER_DEPARTMENT = '馴鹿管理部'
+const caretakerError = (caretakerId: number) =>
+  elves.find((elf) => elf.id === caretakerId)?.department === CARETAKER_DEPARTMENT
+    ? null
+    : new ApiError(422, `照護專員必須是${CARETAKER_DEPARTMENT}的精靈`, {
+        caretakerId: [`照護專員必須是${CARETAKER_DEPARTMENT}的精靈`],
+      })
 
 // 審核範圍（與後端 LeaveRequest::scopeReviewableBy 一致）：部長審自己部門的非部長，副聖誕老人審各部長與自己
 const canReviewLeave = (reviewer: ElfProfile | null, leave: Leave) => {
@@ -421,6 +464,7 @@ export const demoClient: ApiClient = {
           .read()
           .filter(
             (leave) =>
+              !leave.reindeerNumber &&
               (query.departmentId === null || departmentIdOf(leave.elfNumber) === query.departmentId) &&
               (text === '' ||
                 leave.elfNumber.toLowerCase().includes(text) ||
@@ -448,11 +492,22 @@ export const demoClient: ApiClient = {
         throw new ApiError(422, PEAK_SEASON_MESSAGE, { startDate: [PEAK_SEASON_MESSAGE] })
       }
 
+      // 只有該馴鹿的照護專員能代請（不存在的馴鹿與別人的馴鹿同樣回覆）
+      const reindeer =
+        input.reindeerId == null
+          ? null
+          : reindeerStore.read().find((item) => item.id === input.reindeerId && item.caretakerId === profile.id)
+
+      if (input.reindeerId != null && !reindeer) {
+        throw new ApiError(422, '只有照護專員能代馴鹿請假', { reindeerId: ['只有照護專員能代馴鹿請假'] })
+      }
+
       const items = leaveStore.read()
-      // 每個假不能重疊；被駁回的假單不佔用日期
+      // 每個假不能重疊；被駁回的假單不佔用日期。精靈自己與每隻馴鹿的假單分開計算
       const overlapping = items.some(
         (leave) =>
           leave.elfNumber === profile.number &&
+          (leave.reindeerNumber ?? null) === (reindeer?.number ?? null) &&
           leave.status !== '駁回' &&
           leave.startDate <= endDate &&
           leave.endDate >= input.startDate,
@@ -468,6 +523,8 @@ export const demoClient: ApiClient = {
         id: Math.max(0, ...items.map((leave) => leave.id)) + 1,
         elfNumber: profile.number,
         elfName: profile.name,
+        reindeerNumber: reindeer?.number ?? null,
+        reindeerName: reindeer?.name ?? null,
         leaveType: input.leaveType,
         days: leaveDays(input.leaveType),
         startDate: input.startDate,
@@ -581,6 +638,90 @@ export const demoClient: ApiClient = {
       }
 
       rosterStore.write(rosterStore.read().filter((item) => item.id !== id))
+    },
+  },
+  reindeer: {
+    // 9 隻不分頁；排序規則與 ReindeerController::index 一致（年資越高＝到職日越早）
+    async list(query) {
+      const direction = query.order === 'asc' ? 1 : -1
+
+      return reindeerStore
+        .read()
+        .map(withReindeerDerived)
+        .sort((a, b) =>
+          query.sort === 'seniority'
+            ? -direction * a.hiredAt.localeCompare(b.hiredAt) || a.number.localeCompare(b.number)
+            : direction * a.number.localeCompare(b.number),
+        )
+    },
+    async create(input) {
+      const error = caretakerError(input.caretakerId)
+
+      if (error) {
+        throw error
+      }
+
+      const items = reindeerStore.read()
+      // 與後端 Reindeer::nextNumber 一致：編號的最大數字 + 1，至少兩位數
+      const maxNumber = Math.max(0, ...items.map((item) => Number(item.number) || 0))
+      const created: StoredReindeer = {
+        ...input,
+        id: Math.max(0, ...items.map((item) => item.id)) + 1,
+        number: String(maxNumber + 1).padStart(2, '0'),
+      }
+      reindeerStore.write([...items, created])
+      return withReindeerDerived(created)
+    },
+    async update(id, input) {
+      const items = reindeerStore.read()
+      const current = items.find((item) => item.id === id)
+
+      if (!current) {
+        throw new ApiError(404, '找不到這個動力單位')
+      }
+
+      const error = caretakerError(input.caretakerId)
+
+      if (error) {
+        throw error
+      }
+
+      // 編號與到職日不可修改，沿用原值
+      const updated: StoredReindeer = { ...input, id, number: current.number, hiredAt: current.hiredAt }
+      reindeerStore.write(items.map((item) => (item.id === id ? updated : item)))
+      return withReindeerDerived(updated)
+    },
+    async remove(id) {
+      const target = reindeerStore.read().find((item) => item.id === id)
+      reindeerStore.write(reindeerStore.read().filter((item) => item.id !== id))
+
+      // 該馴鹿的假單一併刪除
+      if (target) {
+        leaveStore.write(leaveStore.read().filter((leave) => leave.reindeerNumber !== target.number))
+      }
+    },
+    async caretakers(): Promise<PersonOption[]> {
+      return elves
+        .filter((elf) => elf.department === CARETAKER_DEPARTMENT)
+        .map(({ id, number, name }) => ({ id, number, name }))
+        .sort((a, b) => a.number.localeCompare(b.number))
+    },
+    async mine(): Promise<PersonOption[]> {
+      const profile = getStoredProfile()
+
+      return reindeerStore
+        .read()
+        .filter((item) => item.caretakerId === profile?.id)
+        .map(({ id, number, name }) => ({ id, number, name }))
+        .sort((a, b) => a.number.localeCompare(b.number))
+    },
+    async leaves(id) {
+      const target = reindeerStore.read().find((item) => item.id === id)
+
+      return leaveStore
+        .read()
+        .filter((leave) => target !== undefined && leave.reindeerNumber === target.number)
+        .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt) || b.id - a.id)
     },
   },
   statics: {

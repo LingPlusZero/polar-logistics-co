@@ -13,6 +13,7 @@ export {
   setUnauthorizedHandler,
 } from './session'
 export { LEAVE_TYPES, PEAK_SEASON_MESSAGE, leaveDays, leaveEndDate, touchesPeakSeason } from './leave'
+export { MAINTENANCE_INTERVAL_MONTHS, nextMaintenanceDate } from './reindeer'
 export * from './types'
 
 export const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'

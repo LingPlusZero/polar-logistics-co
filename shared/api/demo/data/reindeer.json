@@ -1,0 +1,11 @@
+[
+    { "id": 1, "number": "01", "name": "魯道夫", "hiredAt": "1939-12-01", "maintainedAgo": 40, "caretakerNumber": "E014", "note": "前導照明模組搭載單元，想退休但一直被挽留" },
+    { "id": 2, "number": "02", "name": "衝刺", "hiredAt": "1951-03-14", "maintainedAgo": 75, "caretakerNumber": "E013", "note": null },
+    { "id": 3, "number": "03", "name": "舞步", "hiredAt": "1958-03-14", "maintainedAgo": 20, "caretakerNumber": "E013", "note": null },
+    { "id": 4, "number": "04", "name": "疾風", "hiredAt": "1966-11-05", "maintainedAgo": 60, "caretakerNumber": "E014", "note": null },
+    { "id": 5, "number": "05", "name": "彗星", "hiredAt": "1975-06-18", "maintainedAgo": 88, "caretakerNumber": "E013", "note": null },
+    { "id": 6, "number": "06", "name": "邱比特", "hiredAt": "1984-02-09", "maintainedAgo": 33, "caretakerNumber": "E014", "note": null },
+    { "id": 7, "number": "07", "name": "雷霆", "hiredAt": "1996-10-22", "maintainedAgo": 95, "caretakerNumber": "E013", "note": "問題單位不擅與人合作（已經讓 3 人離職）" },
+    { "id": 8, "number": "08", "name": "閃電", "hiredAt": "2009-07-30", "maintainedAgo": 12, "caretakerNumber": "E014", "note": null },
+    { "id": 9, "number": "09", "name": "極光", "hiredAt": "2025-10-01", "maintainedAgo": 5, "caretakerNumber": "E004", "note": "新一代動力單元，更佳的續航力、更穩定的夜間視野，前導照明模組搭載單元" }
+]

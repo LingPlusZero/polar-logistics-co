@@ -20,6 +20,11 @@ import type {
   LeaveListQuery,
   LeaveRecordQuery,
   Page,
+  PersonOption,
+  Reindeer,
+  ReindeerCreateInput,
+  ReindeerListQuery,
+  ReindeerUpdateInput,
 } from './types'
 
 // 元件只認識這個介面，不知道資料來自 Laravel API 還是 JSON 快照
@@ -67,6 +72,18 @@ export interface ApiClient {
     create(input: ElfCreateInput): Promise<Elf>
     update(id: number, input: ElfUpdateInput): Promise<Elf>
     remove(id: number): Promise<void>
+  }
+  reindeer: {
+    list(query: ReindeerListQuery): Promise<Reindeer[]>
+    create(input: ReindeerCreateInput): Promise<Reindeer>
+    update(id: number, input: ReindeerUpdateInput): Promise<Reindeer>
+    remove(id: number): Promise<void>
+    // 新增／修改時可選的照護專員（馴鹿管理部的精靈）
+    caretakers(): Promise<PersonOption[]>
+    // 登入者擔任照護專員的馴鹿（請假申請可選擇替誰請假）
+    mine(): Promise<PersonOption[]>
+    // 該馴鹿的請假紀錄（申請日新到舊）
+    leaves(id: number): Promise<Leave[]>
   }
   statics: {
     annual(): Promise<AnnualStatic[]>

@@ -10,5 +10,10 @@
     { "id": 9, "elfNumber": "E011", "elfName": "長青", "leaveType": "普通病假", "startAgo": 30, "appliedAgo": 31, "reviewer": "冬青", "reviewedAgo": 30, "rejectReason": "煙囪巡檢排程已滿，無法調度，請另擇日期" },
     { "id": 10, "elfNumber": "E011", "elfName": "長青", "leaveType": "被人類目擊後心理創傷假", "startAgo": 16, "appliedAgo": 17, "reviewer": "冬青", "reviewedAgo": 15, "rejectReason": "事由與假別不符，請與部長確認後重新申請" },
     { "id": 11, "elfNumber": "E011", "elfName": "長青", "leaveType": "普通病假", "startAgo": 4, "appliedAgo": 5, "reviewer": "冬青", "reviewedAgo": 4, "rejectReason": "本月已申請多次，請先與部長確認需求" },
-    { "id": 12, "elfNumber": "E011", "elfName": "長青", "leaveType": "魔力枯竭假", "startAgo": -6, "appliedAgo": 0, "reviewer": null, "reviewedAgo": null, "rejectReason": null }
+    { "id": 12, "elfNumber": "E011", "elfName": "長青", "leaveType": "魔力枯竭假", "startAgo": -6, "appliedAgo": 0, "reviewer": null, "reviewedAgo": null, "rejectReason": null },
+    { "id": 13, "elfNumber": "E013", "elfName": "苔蘚", "reindeerNumber": "07", "reindeerName": "雷霆", "leaveType": "普通病假", "startAgo": 50, "appliedAgo": 51, "reviewer": "松果", "reviewedAgo": 50, "rejectReason": "馴鹿管理部當週出勤人力不足，請另擇日期" },
+    { "id": 14, "elfNumber": "E013", "elfName": "苔蘚", "reindeerNumber": "07", "reindeerName": "雷霆", "leaveType": "魔力枯竭假", "startAgo": 38, "appliedAgo": 39, "reviewer": "松果", "reviewedAgo": 37, "rejectReason": "雪橇編隊需完整配置，請改期" },
+    { "id": 15, "elfNumber": "E013", "elfName": "苔蘚", "reindeerNumber": "07", "reindeerName": "雷霆", "leaveType": "普通病假", "startAgo": 25, "appliedAgo": 26, "reviewer": "松果", "reviewedAgo": 25, "rejectReason": "本季已申請多次，請先與部長確認需求" },
+    { "id": 16, "elfNumber": "E013", "elfName": "苔蘚", "reindeerNumber": "07", "reindeerName": "雷霆", "leaveType": "被人類目擊後心理創傷假", "startAgo": 12, "appliedAgo": 13, "reviewer": "松果", "reviewedAgo": 11, "rejectReason": "事由與假別不符，請重新確認後申請" },
+    { "id": 17, "elfNumber": "E013", "elfName": "苔蘚", "reindeerNumber": "07", "reindeerName": "雷霆", "leaveType": "普通病假", "startAgo": -4, "appliedAgo": 0, "reviewer": null, "reviewedAgo": null, "rejectReason": null }
 ]

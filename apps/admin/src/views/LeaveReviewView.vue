@@ -135,6 +135,9 @@ const submitReject = async () => {
   }
 }
 
+const leaveSubject = (leave: Leave) =>
+  leave.reindeerName ? `馴鹿 ${leave.reindeerName}（${leave.reindeerNumber}）` : '自己'
+
 const statusClass = (status: LeaveStatus) =>
   status === '核准' ? 'status--approved' : status === '駁回' ? 'status--rejected' : 'status--pending'
 </script>
@@ -170,6 +173,7 @@ const statusClass = (status: LeaveStatus) =>
         <thead>
           <tr>
             <th scope="col">申請人</th>
+            <th scope="col">請假對象</th>
             <th scope="col">假別</th>
             <th scope="col">請假期間</th>
             <th scope="col">申請日期</th>
@@ -182,6 +186,7 @@ const statusClass = (status: LeaveStatus) =>
         <tbody>
           <tr v-for="leave in leaves" :key="leave.id">
             <td>{{ leave.elfNumber }}　{{ leave.elfName }}</td>
+            <td>{{ leaveSubject(leave) }}</td>
             <td>{{ leave.leaveType }}</td>
             <td>
               {{ leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} ～ ${leave.endDate}` }}（{{
@@ -215,7 +220,7 @@ const statusClass = (status: LeaveStatus) =>
             </td>
           </tr>
           <tr v-if="!isLoading && leaves.length === 0">
-            <td colspan="8" class="table-empty">沒有符合條件的假單</td>
+            <td colspan="9" class="table-empty">沒有符合條件的假單</td>
           </tr>
         </tbody>
       </table>
