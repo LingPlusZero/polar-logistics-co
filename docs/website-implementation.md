@@ -33,7 +33,7 @@
 
 ## 人才招募
 - 資料：`api.career.list()`
-- `description`、`requirements`、`promotion` 在資料庫以換行分隔，前端拆成清單；`benefits`、`note` 為單行文字
+- `description`、`requirements`、`benefits` 在資料庫以換行分隔，前端拆成清單（`benefits` 只有一行時維持單行文字，實習精靈的轉正機會併在福利裡）；`note` 為單行文字
 - `department` 為 null 時顯示「各部門」（對應 docs 職缺 8）
 - 沒有職缺資料時不顯示列表，載入失敗顯示「資料載入失敗」
 

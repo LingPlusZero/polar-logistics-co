@@ -39,8 +39,8 @@
 - seeder：`ReindeerSeeder`（9 隻，編號 01–09，來自 docs/brand.md；表內已有資料就不灌入，須排在 ElfSeeder 之後；同時建立 07 的假單，見 api.md）
 
 ## career
-- id、title、department_id（FK → department.id，可 null＝不限部門，restrict on delete）、description（text）、requirements（text）、benefits（text，可 null）、promotion（text，可 null）、note（text，可 null）、timestamps
-- migration：`2026_10_08_000001_create_career_table.php`、`2026_10_08_000003_add_benefits_and_promotion_to_career_table.php`、`2026_10_08_000005_change_career_department_to_foreign_key.php`（把原本的部門名稱文字回填成關聯後移除舊欄位，「各部門」維持 null）
+- id、title、department_id（FK → department.id，可 null＝不限部門，restrict on delete）、description（text）、requirements（text）、benefits（text，可 null，轉正機會也寫在這裡）、note（text，可 null）、timestamps
+- migration：`2026_10_08_000001_create_career_table.php`、`2026_10_08_000003_add_benefits_and_promotion_to_career_table.php`、`2026_10_08_000005_change_career_department_to_foreign_key.php`（把原本的部門名稱文字回填成關聯後移除舊欄位，「各部門」維持 null）、`2026_10_14_000003_merge_promotion_into_benefits_on_career_table.php`（轉正機會算福利，把 promotion 接在 benefits 後面一行一項，再移除 promotion 欄位；還原只補回欄位、不拆回內容）
 - seeder：`CareerSeeder`（內容來自 docs/website.md「職缺參考」；表內已有資料就不灌入）
 
 ## annual_statics

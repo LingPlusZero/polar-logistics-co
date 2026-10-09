@@ -21,9 +21,9 @@
 - GET `/api/ping` → `{"status":"ok"}`（測試：tests/Feature/PingTest.php）
 
 ### api/career/ 職缺列表
-- 欄位：`id`、`title`（必填，≤100）、`departmentId`（選填，須為既有部門 id，空值＝不限部門）、`department`（唯讀，部門名稱，不限部門時為 null）、`description`（必填，≤5000）、`requirements`（必填，≤5000）、`benefits` 福利（選填，≤2000）、`promotion` 轉正機會（選填，≤5000）、`note` 備註（選填，≤2000）
-- `description`、`requirements`、`promotion` 為條列欄位：一行一項，以換行字元（`\n`）分隔，前端轉成清單
-- 影響欄位：職缺名稱、職缺部門、工作內容、任職資格、福利、轉正機會、備註
+- 欄位：`id`、`title`（必填，≤100）、`departmentId`（選填，須為既有部門 id，空值＝不限部門）、`department`（唯讀，部門名稱，不限部門時為 null）、`description`（必填，≤5000）、`requirements`（必填，≤5000）、`benefits` 福利（選填，≤2000；轉正機會也寫在這裡，不再有獨立欄位）、`note` 備註（選填，≤2000）
+- `description`、`requirements`、`benefits` 為條列欄位：一行一項，以換行字元（`\n`）分隔，前端轉成清單（福利只有一行時維持單行文字）
+- 影響欄位：職缺名稱、職缺部門、工作內容、任職資格、福利、備註
 - GET `/api/career` 職缺清單 → 200，陣列，依 id 排序（公開）
 - 以下寫入需帶 `Authorization: Bearer <token>` 且有 `career.manage`；未登入回 401，沒有權限回 403
 - POST `/api/career` 新增職缺 → 201，回傳該筆

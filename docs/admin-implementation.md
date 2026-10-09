@@ -34,7 +34,7 @@
 
 ## 版面與選單
 - 寬螢幕（≥48em）側欄固定在左側；窄螢幕改為頂列按鈕展開；固定元素以 `--banner-height` 避開 Demo 橫幅
-- 側欄選單過長時仍可捲動，但隱藏捲軸（`scrollbar-width: none`）
+- 側欄選單過長時仍可捲動，但隱藏捲軸（`scrollbar-width: none`）；全站（`styles/controls.css` 的 `*`）所有會捲動的區域（頁面、表格、視窗、文字框）都隱藏捲軸，仍可用滾輪、觸控或鍵盤捲動
 - 選單：手風琴（同時只展開一組，`SideMenu.vue`），進入群組內頁面時自動展開；首頁、群組標題、子項目共用同一套連結樣式（目前頁面用紅色左線標示）；展開動畫用 grid 列高 `0fr → 1fr`，收合時 `inert`
 
 ## 首頁
@@ -79,3 +79,10 @@
 - 頁面 `views/AttendanceView.vue`（`elf.attendance`）：唯讀列表 + 後端分頁（每頁 10 筆）；搜尋（精靈編號/姓名，300ms debounce）、部門與日期篩選用共用的 `components/RecordFilters.vue`（預設最近一週：今天往前 6 天到今天，用瀏覽器本地日期，見 `utils/dateRange.ts`；起、迄皆可留空，「清除日期」會看到全部；改變就回第 1 頁，迄日 `min` 限制為起日。預設只是前端帶的查詢條件，API 本身沒有預設日期範圍）；排序用表頭按鈕（精靈編號、上班時間、下班時間、工作時數，四欄樣式一致；一開始都未標示排序，資料依預設的上班時間新到舊，點上班時間即回到此順序並標示），點同一欄切換升降冪，換欄時上班、下班時間先新到舊，編號與工作時數先升冪（工時短的在前，方便找出不足 8 小時的日子）
 - 工作時數不足 8 小時（`workMinutes < 480`）的整列背景 `#fff6d0`；表格上方放圖例說明底色意義，避免只靠顏色傳達
 - Demo：不存快照，`shared/api/demo/attendance.ts` 的 `generateAttendance` 依「今天」往前產生（同一個分頁只算一次，唯讀）；規則與 `AttendanceSeeder` 完全一致（含與 PHP 相同的 crc32 雜湊、時間範圍與失蹤精靈的最後出勤日），改一邊要改另一邊，所以 Demo 與真實資料在同一天看到的內容相同，GitHub Pages 上也不會過期
+
+## 職缺管理
+- 頁面 `views/CareerManageView.vue`（`career.manage`，人力資源部）：沿用既有的職缺 API（`api.career`，官網也讀同一支），沒有搜尋與分頁（職缺只有個位數），列表只顯示職缺名稱、職缺部門（空值顯示「不限部門」）、工作內容，其餘欄位在修改視窗
+- 工作內容在列表用 CSS `line-clamp` 只顯示前 3 行並保留換行，完整內容在修改視窗
+- 新增／修改共用 `components/CareerFormDialog.vue`（有帶 `career` 為編輯）：職缺部門下拉第一項是「不限部門」（送 `departmentId: null`）；工作內容、任職資格、福利「一行一項」，官網會轉成條列（轉正機會算福利，併在福利裡，沒有獨立欄位）；福利、備註選填，留空送 null；必填欄位未填時送出按鈕停用，後端 422 的欄位錯誤顯示在對應欄位下
+- 刪除用 `ConfirmDialog` 二次確認，提醒官網不再顯示
+- Demo：`demoClient.career` 本來就有新增、修改、刪除，資料 `shared/api/demo/data/career.json`，寫入存 sessionStorage（`demo:career`）
