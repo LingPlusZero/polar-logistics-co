@@ -10,6 +10,9 @@ cd /var/www/html
 
 grep -q '^APP_KEY=.\+' .env || php artisan key:generate --force
 
+# 精靈預設密碼不放進版控，沒設定就無法 seed，先擋下並提示
+grep -q '^ELF_DEFAULT_PASSWORD=.\+' .env || { echo "請先在 apps/api/.env 設定 ELF_DEFAULT_PASSWORD（精靈預設密碼，至少 12 字元）" >&2; exit 1; }
+
 # depends_on 的 healthcheck 已確保 MySQL 可連線，這裡直接 migrate
 php artisan migrate --force
 

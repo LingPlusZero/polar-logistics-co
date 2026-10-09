@@ -14,6 +14,7 @@
 - 沒有 `.env` 就複製 `.env.example`
 - 沒有 vendor 就 `composer install`
 - 沒有 `APP_KEY` 就 `key:generate`
+- `.env` 的 `ELF_DEFAULT_PASSWORD` 沒填就印出提示並結束（預設密碼不進版控，需自行設定）
 - `migrate --force`，再 `db:seed --force`（seeder 皆可重複執行）
 - 開放 storage、bootstrap/cache 寫入權限，再啟動 php-fpm
 

@@ -79,6 +79,11 @@ polar-logistics-co/
 | <img src="docs/screenshots/admin-reindeer.webp" width="600"> |
 
 ## 如何本機用 Docker 跑完整版
+首次啟動前，先設定精靈預設密碼（不進版控）：
+```sh
+cp apps/api/.env.example apps/api/.env   # 然後在 .env 填入 ELF_DEFAULT_PASSWORD（至少 12 字元）
+```
+
 ```sh
 docker compose up -d          # 啟動全部服務，並自動 migrate
 ```
