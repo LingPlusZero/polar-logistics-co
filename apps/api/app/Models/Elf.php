@@ -11,9 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Elf extends Model
 {
-    // 開發測試用的預設密碼（新增精靈與 ElfSeeder 共用），正式環境上線前必須改掉
-    public const DEFAULT_PASSWORD = '1qaz@WSX3edc';
-
     // 登入後閒置超過這麼久就自動登出（前端 IDLE_TIMEOUT_MS 要同步）
     public const IDLE_TIMEOUT_MINUTES = 30;
 
@@ -47,6 +44,13 @@ class Elf extends Model
             ->max() ?? 0;
 
         return sprintf('E%03d', $max + 1);
+    }
+
+    // 預設密碼（新增精靈與 ElfSeeder 共用），由 .env 的 ELF_DEFAULT_PASSWORD 提供
+    public static function defaultPassword(): string
+    {
+        return config('elf.default_password')
+            ?? throw new \RuntimeException('請在 .env 設定 ELF_DEFAULT_PASSWORD');
     }
 
     public function department(): BelongsTo

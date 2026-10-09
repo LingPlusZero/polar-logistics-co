@@ -63,7 +63,7 @@ class ElfController extends Controller
             $elf = new Elf($request->elfData());
             $elf->number = Elf::nextNumber();
             // 新進精靈先用預設密碼，登入後自行修改
-            $elf->password = Elf::DEFAULT_PASSWORD;
+            $elf->password = Elf::defaultPassword();
             $elf->save();
 
             return $elf;

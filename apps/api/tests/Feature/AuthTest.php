@@ -13,7 +13,10 @@ class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const PASSWORD = '1qaz@WSX3edc';
+    private function password(): string
+    {
+        return Elf::defaultPassword();
+    }
 
     protected function setUp(): void
     {
@@ -22,9 +25,9 @@ class AuthTest extends TestCase
         $this->seed([DepartmentSeeder::class, ElfSeeder::class]);
     }
 
-    private function login(string $number, string $password = self::PASSWORD)
+    private function login(string $number, ?string $password = null)
     {
-        return $this->postJson('/api/auth/login', ['number' => $number, 'password' => $password]);
+        return $this->postJson('/api/auth/login', ['number' => $number, 'password' => $password ?? $this->password()]);
     }
 
     public function test_精靈可以登入並取得權杖與權限(): void
@@ -65,7 +68,7 @@ class AuthTest extends TestCase
         $response = $this->login('E001');
 
         $response->assertJsonMissingPath('elf.password');
-        $this->assertNotSame(self::PASSWORD, Elf::where('number', 'E001')->value('password'));
+        $this->assertNotSame($this->password(), Elf::where('number', 'E001')->value('password'));
     }
 
     public function test_重複執行_seeder_不會蓋掉已修改的密碼(): void
@@ -198,10 +201,10 @@ class AuthTest extends TestCase
     {
         $this->app->detectEnvironment(fn () => 'production');
 
-        $this->postJson('http://localhost/api/auth/login', ['number' => 'E001', 'password' => self::PASSWORD])
+        $this->postJson('http://localhost/api/auth/login', ['number' => 'E001', 'password' => $this->password()])
             ->assertStatus(403);
 
-        $this->postJson('https://localhost/api/auth/login', ['number' => 'E001', 'password' => self::PASSWORD])
+        $this->postJson('https://localhost/api/auth/login', ['number' => 'E001', 'password' => $this->password()])
             ->assertOk();
     }
 
@@ -210,7 +213,7 @@ class AuthTest extends TestCase
     private function changePassword(string $token, array $overrides = [])
     {
         return $this->withToken($token)->putJson('/api/auth/password', [
-            'oldPassword' => self::PASSWORD,
+            'oldPassword' => $this->password(),
             'newPassword' => self::NEW_PASSWORD,
             'newPasswordConfirmation' => self::NEW_PASSWORD,
             ...$overrides,
@@ -264,8 +267,8 @@ class AuthTest extends TestCase
         $token = $this->login('E001')->json('token');
 
         $this->changePassword($token, [
-            'newPassword' => self::PASSWORD,
-            'newPasswordConfirmation' => self::PASSWORD,
+            'newPassword' => $this->password(),
+            'newPasswordConfirmation' => $this->password(),
         ])->assertStatus(422)->assertJsonValidationErrors('newPassword');
     }
 

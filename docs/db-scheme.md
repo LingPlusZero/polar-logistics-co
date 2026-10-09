@@ -8,7 +8,7 @@
 
 ## elves
 - id、number（精靈編號，unique，登入帳號，例如 E001）、name、department_id（FK → department.id，restrict on delete）、rank（職級：實習精靈／正式精靈／資深精靈／部長／副聖誕老人，PHP 端用 `ElfRank` enum）、hired_at（到職日，年資由此計算，不存欄位）、status（正常／請假／可能失蹤，預設正常，PHP 端用 `ElfStatus` enum）、note（≤500，可 null）、api_token（登入權杖的 sha256 雜湊，可 null＝未登入，unique，序列化時隱藏）、api_token_used_at（權杖最後使用時間，閒置 30 分鐘失效，見 api.md，可 null）、timestamps
-- password：bcrypt 雜湊（model cast `hashed`，序列化時隱藏）；`ElfSeeder` 只在新增精靈時設定預設測試密碼 `1qaz@WSX3edc`，重複執行不會蓋掉之後修改的密碼；正式環境上線前必須改掉
+- password：bcrypt 雜湊（model cast `hashed`，序列化時隱藏）；`ElfSeeder` 只在新增精靈時設定預設測試密碼（讀 `.env` 的 `ELF_DEFAULT_PASSWORD`），重複執行不會蓋掉之後修改的密碼；正式環境上線前必須改掉
 - migration：`2026_10_09_000001_create_elves_table.php`、`2026_10_11_000001_add_api_token_used_at_to_elves_table.php`
 - seeder：`ElfSeeder`（初始狀態只在新增時設定，E010、E012、E015、E018 為「可能失蹤」，其餘正常，讓 Demo 有內容；22 名：副聖誕老人 1、各部門部長 7、資深／正式精靈 11、實習精靈 3；以 number 做 updateOrCreate，須排在 DepartmentSeeder 之後）
 - 編號對照：E001 副聖誕老人（董事會）、E002–E008 各部門部長（依部門 id 順序）、E009–E019 資深／正式精靈、E020–E022 實習精靈

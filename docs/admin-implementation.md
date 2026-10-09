@@ -9,7 +9,7 @@
 ## 登入與權限
 - 登入狀態：`src/composables/useAuth.ts`（模組層級 `ref`）；權杖與個人資料存 sessionStorage（`shared/api/session.ts`），關閉分頁即登出
 - 權限鍵由後端回傳（`permissions`），Demo 模式讀 `shared/api/demo/data/elf.json`（由 `ElfProfileResource` 匯出，ElfSeeder 或權限規則變動後需重新匯出）
-- 真實 API 帳號：E001–E022，預設密碼 `1qaz@WSX3edc`；Demo 模式（`.env.demo`、`.env.development` 設 true）密碼輸入自己的帳號（`demoClient.auth.login` 比對）。`.env.development` 目前為 `false`（接真實 API）
+- 真實 API 帳號：E001–E022，預設密碼見 `apps/api/.env` 的 `ELF_DEFAULT_PASSWORD`；Demo 模式（`.env.demo`、`.env.development` 設 true）密碼輸入自己的帳號（`demoClient.auth.login` 比對）。`.env.development` 目前為 `false`（接真實 API）
 
 ## 修改密碼
 - 密碼規則在 `shared/api/password.ts`（至少 12 字元 + 大小寫數字特殊符號），與後端 `ChangePasswordRequest` 同步；登入頁不顯示也不檢查規則，以後端回覆為準，規則只用在修改密碼頁（`PasswordView.vue`，即時顯示規則達成狀況）

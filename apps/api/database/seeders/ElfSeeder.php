@@ -47,7 +47,7 @@ class ElfSeeder extends Seeder
         $departments = Department::pluck('id', 'name');
 
         // 以編號為準，重複執行不會產生重複資料；不覆蓋既有的狀態、備註與已修改的密碼
-        $defaultPassword = Hash::make(Elf::DEFAULT_PASSWORD);
+        $defaultPassword = Hash::make(Elf::defaultPassword());
 
         foreach (self::ELVES as $row) {
             [$number, $name, $department, $rank, $hiredAt] = $row;

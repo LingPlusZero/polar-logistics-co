@@ -193,7 +193,7 @@ class ElfTest extends TestCase
             ->assertJsonPath('department', '禮物包裝部');
 
         $elf = Elf::where('name', '新進')->firstOrFail();
-        $this->assertTrue(Hash::check(Elf::DEFAULT_PASSWORD, $elf->password));
+        $this->assertTrue(Hash::check(Elf::defaultPassword(), $elf->password));
     }
 
     public function test_新增缺少必填欄位會失敗(): void
