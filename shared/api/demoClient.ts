@@ -33,7 +33,20 @@ const elves = elfData as ElfProfile[]
 // 出勤紀錄依今天往前產生（唯讀），同一個分頁只算一次
 let attendanceCache: Attendance[] | null = null
 const attendanceRecords = () => (attendanceCache ??= generateAttendance(elves))
-const rosterStore = createStore<Elf>('demo:roster', rosterData as Elf[])
+
+// 最後出勤日：該精靈最近一筆上班時間的日期，沒有出勤紀錄為 null（與後端 ElfResource 一致）
+const withLastAttended = (elf: StoredElf): Elf => {
+  const last = attendanceRecords()
+    .filter((record) => record.elfNumber === elf.number)
+    .map((record) => record.clockIn)
+    .sort()
+    .at(-1)
+
+  return { ...elf, lastAttendedAt: last ? last.slice(0, 10) : null }
+}
+// 名冊存的欄位不含最後出勤日（它由出勤紀錄算出，輸出時才帶上）
+type StoredElf = Omit<Elf, 'lastAttendedAt'>
+const rosterStore = createStore<StoredElf>('demo:roster', rosterData as StoredElf[])
 const complaintStore = createStore<Complaint>('demo:complaint', complaintData as Complaint[])
 
 const PASSWORD_KEY_PREFIX = 'demo:password:'
@@ -262,7 +275,7 @@ export const demoClient: ApiClient = {
               elf.name.toLowerCase().includes(text)),
         )
 
-      const byNumber = (a: Elf, b: Elf) => a.number.localeCompare(b.number)
+      const byNumber = (a: StoredElf, b: StoredElf) => a.number.localeCompare(b.number)
 
       filtered.sort((a, b) => {
         if (query.sort === 'department') {
@@ -282,7 +295,7 @@ export const demoClient: ApiClient = {
       const page = Math.max(1, query.page)
 
       return {
-        items: filtered.slice((page - 1) * query.perPage, page * query.perPage),
+        items: filtered.slice((page - 1) * query.perPage, page * query.perPage).map(withLastAttended),
         total: filtered.length,
         page,
         perPage: query.perPage,
@@ -295,14 +308,14 @@ export const demoClient: ApiClient = {
       // 與後端 Elf::nextNumber 一致：E 開頭編號的最大數字 + 1，至少三位數
       const maxNumber = Math.max(0, ...items.map((item) => Number(item.number.slice(1)) || 0))
 
-      const created: Elf = {
+      const created: StoredElf = {
         ...input,
         number: `E${String(maxNumber + 1).padStart(3, '0')}`,
         id: Math.max(0, ...items.map((item) => item.id)) + 1,
         department: departmentName(input.departmentId) ?? '',
       }
       rosterStore.write([...items, created])
-      return created
+      return withLastAttended(created)
     },
     async update(id, input) {
       const current = rosterStore.read().find((item) => item.id === id)
@@ -312,7 +325,7 @@ export const demoClient: ApiClient = {
       }
 
       // 精靈編號與到職日不可修改，沿用原值
-      const updated: Elf = {
+      const updated: StoredElf = {
         ...input,
         id,
         number: current.number,
@@ -322,7 +335,7 @@ export const demoClient: ApiClient = {
         department: departmentName(input.departmentId) ?? '',
       }
       rosterStore.write(rosterStore.read().map((item) => (item.id === id ? updated : item)))
-      return updated
+      return withLastAttended(updated)
     },
     async remove(id) {
       if (getStoredProfile()?.id === id) {

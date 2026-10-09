@@ -227,6 +227,7 @@ const confirmDelete = async () => {
                 年資 <span aria-hidden="true">{{ sortArrow('seniority') }}</span>
               </button>
             </th>
+            <th scope="col">最後出勤日</th>
             <th scope="col">備註</th>
             <th scope="col"><span class="visually-hidden">操作</span></th>
           </tr>
@@ -242,6 +243,7 @@ const confirmDelete = async () => {
             <td>{{ elf.number }}</td>
             <td>{{ elf.hiredAt }}</td>
             <td>{{ formatSeniority(elf.hiredAt) }}</td>
+            <td>{{ elf.lastAttendedAt ?? '—' }}</td>
             <td class="table__note">{{ elf.note ?? '' }}</td>
             <td>
               <div class="table__actions">
@@ -251,7 +253,7 @@ const confirmDelete = async () => {
             </td>
           </tr>
           <tr v-if="!isLoading && elves.length === 0">
-            <td colspan="9" class="table-empty">沒有符合條件的精靈</td>
+            <td colspan="10" class="table-empty">沒有符合條件的精靈</td>
           </tr>
         </tbody>
       </table>

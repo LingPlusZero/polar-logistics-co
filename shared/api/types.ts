@@ -39,13 +39,15 @@ export interface Elf {
   hiredAt: string
   status: ElfStatus
   note: string | null
+  // 最後一次出勤的日期 YYYY-MM-DD，由出勤紀錄算出；還沒有出勤紀錄為 null
+  lastAttendedAt: string | null
 }
 
 // 「請假」由請假單決定（有申請且正值假期），不能手動設定
 export type EditableElfStatus = Exclude<ElfStatus, '請假'>
 
 // 精靈編號由後端自動產生，新增時不送；編輯時到職日不可改，後端會忽略
-export type ElfCreateInput = Omit<Elf, 'id' | 'department' | 'number' | 'status'> & { status: EditableElfStatus }
+export type ElfCreateInput = Omit<Elf, 'id' | 'department' | 'number' | 'status' | 'lastAttendedAt'> & { status: EditableElfStatus }
 // 請假中的精靈不送 status（狀態由請假單決定）
 export type ElfUpdateInput = Omit<ElfCreateInput, 'hiredAt' | 'status'> & {
   status?: EditableElfStatus
