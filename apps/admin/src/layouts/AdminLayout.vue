@@ -4,6 +4,9 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SideMenu from '../components/SideMenu.vue'
 import { useAuth } from '../composables/useAuth'
+import { useIdleLogout } from '../composables/useIdleLogout'
+
+useIdleLogout()
 
 const route = useRoute()
 const router = useRouter()

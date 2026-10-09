@@ -32,3 +32,14 @@ export const clearSession = () =>
     sessionStorage.removeItem(TOKEN_KEY)
     sessionStorage.removeItem(PROFILE_KEY)
   }, undefined)
+
+// 已登入狀態下任何 API 回 401（權杖失效、閒置被登出）時要通知畫面，由各 app 註冊處理方式
+type UnauthorizedHandler = (reason?: string) => void
+
+let unauthorizedHandler: UnauthorizedHandler | null = null
+
+export const setUnauthorizedHandler = (handler: UnauthorizedHandler) => {
+  unauthorizedHandler = handler
+}
+
+export const notifyUnauthorized = (reason?: string) => unauthorizedHandler?.(reason)

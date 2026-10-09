@@ -14,7 +14,13 @@ const password = ref('')
 const errorMessage = ref('')
 
 // 從其他頁面導回登入頁時帶的提示（例如改完密碼）
-const notice = route.query.notice === 'password-changed' ? '密碼已更新，請使用新密碼重新登入。' : ''
+const NOTICES: Record<string, string> = {
+  'password-changed': '密碼已更新，請使用新密碼重新登入。',
+  'idle-timeout': '您已閒置超過 30 分鐘，為了帳號安全已自動登出，請重新登入。',
+  'session-expired': '登入已失效，請重新登入。',
+}
+
+const notice = typeof route.query.notice === 'string' ? (NOTICES[route.query.notice] ?? '') : ''
 const isSubmitting = ref(false)
 
 // 只接受站內路徑，避免被帶去其他網站

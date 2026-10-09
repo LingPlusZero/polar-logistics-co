@@ -5,7 +5,13 @@ import { httpClient } from './httpClient'
 export type { ApiClient } from './client'
 export { ApiError } from './errors'
 export { PASSWORD_MIN_LENGTH, PASSWORD_RULES, isValidPassword } from './password'
-export { clearSession, getStoredProfile, getToken, saveSession } from './session'
+export {
+  clearSession,
+  getStoredProfile,
+  getToken,
+  saveSession,
+  setUnauthorizedHandler,
+} from './session'
 export * from './types'
 
 export const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'

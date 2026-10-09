@@ -1,6 +1,6 @@
 import type { ApiClient } from './client'
 import { ApiError } from './errors'
-import { getToken } from './session'
+import { getToken, notifyUnauthorized } from './session'
 
 // 正常模式：打 Laravel API，開發時由 vite proxy 轉發 /api
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -18,10 +18,17 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (!response.ok) {
     // 優先使用後端的錯誤訊息（驗證失敗、查無帳號等）
     const payload = await response.json().catch(() => null)
+
+    // 帶著權杖卻被拒絕＝登入已失效（登入端點的 401 是帳密錯誤，不算）
+    if (response.status === 401 && token && path !== '/auth/login') {
+      notifyUnauthorized(payload?.reason)
+    }
+
     throw new ApiError(
       response.status,
       payload?.message ?? `API ${method} ${path} 失敗：${response.status}`,
       payload?.errors,
+      payload?.reason,
     )
   }
 

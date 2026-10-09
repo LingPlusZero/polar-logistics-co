@@ -47,8 +47,15 @@ const logout = async () => {
   restorePromise = null
 }
 
+// 本機登入狀態已被清掉（閒置或權杖失效），同步記憶體中的資料
+const markLoggedOut = () => {
+  profile.value = null
+  restorePromise = null
+}
+
 export function useAuth() {
   return {
+    markLoggedOut,
     profile,
     isLoggedIn: computed(() => profile.value !== null),
     can: (permission: Permission) => profile.value?.permissions.includes(permission) ?? false,
